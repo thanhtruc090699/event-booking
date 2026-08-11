@@ -1,0 +1,29 @@
+eventSeats:
+  get:
+    tags:
+      - Seats
+    summary: Get seats for an event
+    operationId: getEventSeats
+    parameters:
+      - name: eventId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+    responses:
+      "200":
+        description: Event seats
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "../components/schema/seat.yaml#/EventSeatResponse"
+      "404":
+        description: Event not found
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"

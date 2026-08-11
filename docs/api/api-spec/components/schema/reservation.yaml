@@ -1,0 +1,48 @@
+CreateReservationRequest:
+  type: object
+  required:
+    - eventSeatId
+    - customerId
+  properties:
+    eventSeatId:
+      type: integer
+      format: int64
+      example: 1001
+    customerId:
+      type: integer
+      format: int64
+      example: 1
+
+ReservationResponse:
+  type: object
+  required:
+    - reservationId
+    - eventSeatId
+    - customerId
+    - status
+    - expiresAt
+  properties:
+    reservationId:
+      type: integer
+      format: int64
+      example: 5001
+    eventSeatId:
+      type: integer
+      format: int64
+      example: 1001
+    customerId:
+      type: integer
+      format: int64
+      example: 1
+    status:
+      type: string
+      enum:
+        - ACTIVE
+        - EXPIRED
+        - CANCELLED
+        - CONFIRMED
+      example: ACTIVE
+    expiresAt:
+      type: string
+      format: date-time
+      example: "2026-09-20T18:05:00"

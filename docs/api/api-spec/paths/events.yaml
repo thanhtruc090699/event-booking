@@ -1,0 +1,48 @@
+events:
+  get:
+    tags:
+      - Events
+    summary: Get published events
+    operationId: getEvents
+    responses:
+      "200":
+        description: Published events
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "../components/schema/event.yaml#/EventSummaryResponse"
+      "400":
+        description: Invalid request
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+eventById:
+  get:
+    tags:
+      - Events
+    summary: Get event detail
+    operationId: getEventById
+    parameters:
+      - name: eventId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+    responses:
+      "200":
+        description: Event detail
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/event.yaml#/EventDetailResponse"
+      "404":
+        description: Event not found
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"

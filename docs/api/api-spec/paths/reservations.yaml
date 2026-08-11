@@ -1,0 +1,25 @@
+reservations:
+  post:
+    tags:
+      - Reservations
+    summary: Create a seat reservation
+    operationId: createReservation
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schema/reservation.yaml#/CreateReservationRequest"
+    responses:
+      "201":
+        description: Reservation created
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/reservation.yaml#/ReservationResponse"
+      "409":
+        description: Seat is not available
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"

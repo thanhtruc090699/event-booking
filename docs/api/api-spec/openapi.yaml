@@ -1,0 +1,43 @@
+openapi: 3.0.3
+
+info:
+  title: Event Booking Platform API
+  version: 0.1.0
+  description: >
+    API contract for a Spring Boot event booking backend.
+    The MvP supports event browsing, seat availability, seat reservation,
+    and booking confirmation
+  license:
+    name: MIT
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+tags:
+  - name: Events
+    description: Event browsing APIs
+  - name: Seats
+    description: Event seat availability APIs
+  - name: Reservations
+    description: Seat reservation APIs
+  - name: Bookings
+    description: Booking confirmation APIs
+
+paths:
+  /api/events:
+    $ref: "./paths/events.yaml#/events"
+
+  /api/events/{eventId}:
+    $ref: "./paths/events.yaml#/eventById"
+
+  /api/events/{eventId}/seats:
+    $ref: "./paths/seats.yaml#/eventSeats"
+
+  /api/reservations:
+    $ref: "./paths/reservations.yaml#/reservations"
+
+  /api/bookings:
+    $ref: "./paths/bookings.yaml#/bookings"
+security: []
+
+

@@ -1,0 +1,41 @@
+CreateBookingRequest:
+  type: object
+  required:
+    - reservationId
+    - customerId
+  properties:
+    reservationId:
+      type: integer
+      format: int64
+      example: 5001
+    customerId:
+      type: integer
+      format: int64
+      example: 1
+
+BookingResponse:
+  type: object
+  required:
+    - bookingId
+    - reservationId
+    - status
+    - ticketCode
+  properties:
+    bookingId:
+      type: integer
+      format: int64
+      example: 9001
+    reservationId:
+      type: integer
+      format: int64
+      example: 5001
+    status:
+      type: string
+      enum:
+        - CONFIRMED
+        - CANCELLED
+        - FAILED
+      example: CONFIRMED
+    ticketCode:
+      type: string
+      example: TCK-9001

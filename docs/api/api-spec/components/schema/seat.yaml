@@ -1,0 +1,34 @@
+EventSeatResponse:
+  type: object
+  required:
+    - eventSeatId
+    - section
+    - rowLabel
+    - seatNumber
+    - price
+    - status
+  properties:
+    eventSeatId:
+      type: integer
+      format: int64
+      example: 1001
+    section:
+      type: string
+      example: A
+    rowLabel:
+      type: string
+      example: "1"
+    seatNumber:
+      type: string
+      example: "12"
+    price:
+      type: number
+      format: double
+      example: 49.99
+    status:
+      type: string
+      enum:
+        - AVAILABLE
+        - RESERVED
+        - BOOKED
+      example: AVAILABLE

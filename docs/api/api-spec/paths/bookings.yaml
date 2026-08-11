@@ -1,0 +1,25 @@
+bookings:
+  post:
+    tags:
+      - Bookings
+    summary: Confirm booking from reservation
+    operationId: createBooking
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schema/booking.yaml#/CreateBookingRequest"
+    responses:
+      "201":
+        description: Booking confirmed
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/booking.yaml#/BookingResponse"
+      "409":
+        description: Reservation cannot be confirmed
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"

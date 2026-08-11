@@ -1,0 +1,48 @@
+EventSummaryResponse:
+  type: object
+  required:
+    - id
+    - name
+    - venueName
+    - startTime
+  properties:
+    id:
+      type: integer
+      format: int64
+      example: 1
+    name:
+      type: string
+      example: Rock concert Berlin
+    venueName:
+      type: string
+      example: Berlin Arena
+    startTime:
+      type: string
+      format: date-time
+      example: "2026-09-20T19:00:00"
+EventDetailResponse:
+  type: object
+  required:
+    - id
+    - name
+    - description
+    - venueName
+    - startTime
+  properties:
+    id:
+      type: integer
+      format: int64
+      example: 1
+    name:
+      type: string
+      example: Rock Concert Berlin
+    description:
+      type: string
+      example: Live concert in Berlin
+    venueName:
+      type: string
+      example: Berlin Arena
+    startTime:
+      type: string
+      format: date-time
+      example: "2026-09-20T19:00:00"

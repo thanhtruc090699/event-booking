@@ -1,0 +1,12 @@
+ErrorResponse:
+  type: object
+  required:
+    - code
+    - message
+  properties:
+    code:
+      type: string
+      example: "SEAT_NOT_AVAILABLE"
+    message:
+      type: string
+      example: This seat is no longer available
