@@ -1,0 +1,332 @@
+openapi: 3.0.3
+info:
+  title: Event Booking Platform API
+  version: 0.1.0
+  description: |
+    API contract for a Spring Boot event booking backend. The MvP supports event browsing, seat availability, seat reservation, and booking confirmation
+  license:
+    name: MIT
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+security: []
+tags:
+  - name: Events
+    description: Event browsing APIs
+  - name: Seats
+    description: Event seat availability APIs
+  - name: Reservations
+    description: Seat reservation APIs
+  - name: Bookings
+    description: Booking confirmation APIs
+paths:
+  /api/events:
+    get:
+      tags:
+        - Events
+      summary: Get published events
+      operationId: getEvents
+      responses:
+        '200':
+          description: Published events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventSummaryResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/events/{eventId}:
+    get:
+      tags:
+        - Events
+      summary: Get event detail
+      operationId: getEventById
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          example: 1
+      responses:
+        '200':
+          description: Event detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventDetailResponse'
+        '404':
+          description: Event not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/events/{eventId}/seats:
+    get:
+      tags:
+        - Seats
+      summary: Get seats for an event
+      operationId: getEventSeats
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          example: 1
+      responses:
+        '200':
+          description: Event seats
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventSeatResponse'
+        '404':
+          description: Event not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/reservations:
+    post:
+      tags:
+        - Reservations
+      summary: Create a seat reservation
+      operationId: createReservation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReservationRequest'
+      responses:
+        '201':
+          description: Reservation created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationResponse'
+        '409':
+          description: Seat is not available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/bookings:
+    post:
+      tags:
+        - Bookings
+      summary: Confirm booking from reservation
+      operationId: createBooking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookingRequest'
+      responses:
+        '201':
+          description: Booking confirmed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '409':
+          description: Reservation cannot be confirmed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    EventSummaryResponse:
+      type: object
+      required:
+        - id
+        - name
+        - venueName
+        - startTime
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        name:
+          type: string
+          example: Rock concert Berlin
+        venueName:
+          type: string
+          example: Berlin Arena
+        startTime:
+          type: string
+          format: date-time
+          example: '2026-09-20T19:00:00'
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          example: SEAT_NOT_AVAILABLE
+        message:
+          type: string
+          example: This seat is no longer available
+    EventDetailResponse:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - venueName
+        - startTime
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        name:
+          type: string
+          example: Rock Concert Berlin
+        description:
+          type: string
+          example: Live concert in Berlin
+        venueName:
+          type: string
+          example: Berlin Arena
+        startTime:
+          type: string
+          format: date-time
+          example: '2026-09-20T19:00:00'
+    EventSeatResponse:
+      type: object
+      required:
+        - eventSeatId
+        - section
+        - rowLabel
+        - seatNumber
+        - price
+        - status
+      properties:
+        eventSeatId:
+          type: integer
+          format: int64
+          example: 1001
+        section:
+          type: string
+          example: A
+        rowLabel:
+          type: string
+          example: '1'
+        seatNumber:
+          type: string
+          example: '12'
+        price:
+          type: number
+          format: double
+          example: 49.99
+        status:
+          type: string
+          enum:
+            - AVAILABLE
+            - RESERVED
+            - BOOKED
+          example: AVAILABLE
+    CreateReservationRequest:
+      type: object
+      required:
+        - eventSeatId
+        - customerId
+      properties:
+        eventSeatId:
+          type: integer
+          format: int64
+          example: 1001
+        customerId:
+          type: integer
+          format: int64
+          example: 1
+    ReservationResponse:
+      type: object
+      required:
+        - reservationId
+        - eventSeatId
+        - customerId
+        - status
+        - expiresAt
+      properties:
+        reservationId:
+          type: integer
+          format: int64
+          example: 5001
+        eventSeatId:
+          type: integer
+          format: int64
+          example: 1001
+        customerId:
+          type: integer
+          format: int64
+          example: 1
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - EXPIRED
+            - CANCELLED
+            - CONFIRMED
+          example: ACTIVE
+        expiresAt:
+          type: string
+          format: date-time
+          example: '2026-09-20T18:05:00'
+    CreateBookingRequest:
+      type: object
+      required:
+        - reservationId
+        - customerId
+      properties:
+        reservationId:
+          type: integer
+          format: int64
+          example: 5001
+        customerId:
+          type: integer
+          format: int64
+          example: 1
+    BookingResponse:
+      type: object
+      required:
+        - bookingId
+        - reservationId
+        - status
+        - ticketCode
+      properties:
+        bookingId:
+          type: integer
+          format: int64
+          example: 9001
+        reservationId:
+          type: integer
+          format: int64
+          example: 5001
+        status:
+          type: string
+          enum:
+            - CONFIRMED
+            - CANCELLED
+            - FAILED
+          example: CONFIRMED
+        ticketCode:
+          type: string
+          example: TCK-9001
