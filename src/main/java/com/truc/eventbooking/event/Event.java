@@ -9,7 +9,7 @@ public class Event {
     private final String venueName;
     private final OffsetDateTime startTime;
 
-    public Event(long id, String name, String description, String venueName, OffsetDateTime startTime) {
+    public Event(Long id, String name, String description, String venueName, OffsetDateTime startTime) {
         this.id = id;
         this.name = name;
         this.description = description;
