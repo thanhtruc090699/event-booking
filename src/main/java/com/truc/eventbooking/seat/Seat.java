@@ -9,7 +9,7 @@ public class Seat {
     private final String rowLabel;
     private final String seatNumber;
     private final Double seatPrice;
-    private final SeatStatus seatStatus;
+    private SeatStatus seatStatus;
 
     public Seat (Long eventId, Long seatId, String section, String rowLabel, String seatNumber, Double seatPrice, SeatStatus status) {
         this.eventId = eventId;
@@ -42,7 +42,7 @@ public class Seat {
         return seatStatus;
     }
     public void setSeatStatus(SeatStatus seatStatus) {
-        seatStatus = seatStatus;
+        this.seatStatus = seatStatus;
     }
 
 
