@@ -13,12 +13,6 @@ events:
               type: array
               items:
                 $ref: "../components/schema/event.yaml#/EventSummaryResponse"
-      "400":
-        description: Invalid request
-        content:
-          application/json:
-            schema:
-              $ref: "../components/schema/error.yaml#/ErrorResponse"
 eventById:
   get:
     tags:
@@ -42,6 +36,12 @@ eventById:
               $ref: "../components/schema/event.yaml#/EventDetailResponse"
       "404":
         description: Event not found
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+      "400":
+        description: Invalid request
         content:
           application/json:
             schema:

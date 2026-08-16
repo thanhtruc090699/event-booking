@@ -37,3 +37,42 @@ bookings:
           application/json:
             schema:
               $ref: "../components/schema/error.yaml#/ErrorResponse"
+      "400":
+        description: Invalid booking request
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+      "404":
+        description: Reservation not found
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+bookingById:
+  get:
+    tags:
+      - Booking
+    summary: get detailed booking by its id
+    operationId: getBookingById
+    parameters:
+      - name: bookingId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+    responses:
+      "200":
+        description: get booking by its id
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/booking.yaml#/BookingResponse"
+      "404":
+        description: Booking not found
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"

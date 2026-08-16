@@ -38,6 +38,9 @@ paths:
 
   /api/bookings:
     $ref: "./paths/bookings.yaml#/bookings"
+
+  /api/bookings/{bookingId}:
+    $ref: "./paths/bookings.yaml#/bookingById"
 security: []
 
 

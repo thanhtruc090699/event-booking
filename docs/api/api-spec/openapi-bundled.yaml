@@ -35,12 +35,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/EventSummaryResponse'
-        '400':
-          description: Invalid request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /api/events/{eventId}:
     get:
       tags:
@@ -62,6 +56,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EventDetailResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Event not found
           content:
@@ -116,6 +116,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ReservationResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Seat not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '409':
           description: Seat is not available
           content:
@@ -155,8 +167,47 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BookingResponse'
+        '400':
+          description: Invalid booking request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Reservation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '409':
           description: Reservation cannot be confirmed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/bookings/{bookingId}:
+    get:
+      tags:
+        - Booking
+      summary: get detailed booking by its id
+      operationId: getBookingById
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          example: 1
+      responses:
+        '200':
+          description: get booking by its id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '404':
+          description: Booking not found
           content:
             application/json:
               schema:
@@ -185,18 +236,6 @@ components:
           type: string
           format: date-time
           example: '2026-09-20T19:00:00'
-    ErrorResponse:
-      type: object
-      required:
-        - code
-        - message
-      properties:
-        code:
-          type: string
-          example: SEAT_NOT_AVAILABLE
-        message:
-          type: string
-          example: This seat is no longer available
     EventDetailResponse:
       type: object
       required:
@@ -223,6 +262,18 @@ components:
           type: string
           format: date-time
           example: '2026-09-20T19:00:00'
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          example: SEAT_NOT_AVAILABLE
+        message:
+          type: string
+          example: This seat is no longer available
     EventSeatResponse:
       type: object
       required:

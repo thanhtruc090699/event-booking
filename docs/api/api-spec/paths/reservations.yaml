@@ -23,3 +23,15 @@ reservations:
           application/json:
             schema:
               $ref: "../components/schema/error.yaml#/ErrorResponse"
+      "404":
+        description: Seat not found
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+      "400":
+        description: Invalid request
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
