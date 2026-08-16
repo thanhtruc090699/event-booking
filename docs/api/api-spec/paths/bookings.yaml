@@ -1,4 +1,18 @@
 bookings:
+  get:
+    tags:
+      - Bookings
+    summary: Get all the bookings
+    operationId: getBookings
+    responses:
+      "200":
+        description: All successful bookings
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "../components/schema/booking.yaml#/BookingResponse"
   post:
     tags:
       - Bookings

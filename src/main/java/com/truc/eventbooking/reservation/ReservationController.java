@@ -1,6 +1,5 @@
 package com.truc.eventbooking.reservation;
 
-import org.springframework.stereotype.Controller;
 import com.truc.eventbooking.reservation.dto.ReservationResponse;
 import com.truc.eventbooking.reservation.dto.CreateReservationRequest;
 import org.springframework.web.bind.annotation.*;

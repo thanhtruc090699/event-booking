@@ -32,7 +32,7 @@ public class SeatRepository {
                     "1",
                     "14",
                     59.99,
-                    SeatStatus.BOOKED
+                    SeatStatus.AVAILABLE
             ),
             new Seat(
                     2L,

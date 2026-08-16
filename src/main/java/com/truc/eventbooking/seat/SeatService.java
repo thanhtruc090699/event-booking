@@ -24,4 +24,14 @@ public class SeatService {
                 seat.getSeatStatus()
         );
     }
+    public Seat releaseSeat(Long seatId) {
+       Seat seat = seatRepository.findBySeatId(seatId).orElseThrow(()-> new RuntimeException("Seat not found"));
+       if(seat.getSeatStatus()==SeatStatus.RESERVED) seat.setSeatStatus(SeatStatus.AVAILABLE);
+       return seat;
+    }
+    public Seat markAsBooked(Long seatId) {
+        Seat seat = seatRepository.findBySeatId(seatId).orElseThrow(()-> new RuntimeException("Seat not found"));
+        if (seat.getSeatStatus()==SeatStatus.RESERVED) seat.setSeatStatus(SeatStatus.BOOKED);
+        return seat;
+    }
 }
