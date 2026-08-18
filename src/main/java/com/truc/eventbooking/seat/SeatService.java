@@ -39,7 +39,7 @@ public class SeatService {
        return seat;
     }
     public Seat markAsReserved(Long seatId) {
-        Seat seat = seatRepository.findById(seatId).orElseThrow(()-> new NotFoundException("SEAT_NOT_FOUND", "Seat not found"));
+        Seat seat = seatRepository.findByIdForUpdate(seatId).orElseThrow(()-> new NotFoundException("SEAT_NOT_FOUND", "Seat not found"));
         if(seat.getSeatStatus()!=SeatStatus.AVAILABLE) throw new BusinessConflictException("SEAT_NOT_AVAILABLE", "Seat not available");
         seat.setSeatStatus(SeatStatus.RESERVED);
         return seat;
