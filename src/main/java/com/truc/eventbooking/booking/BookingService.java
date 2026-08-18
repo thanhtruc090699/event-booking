@@ -8,6 +8,7 @@ import com.truc.eventbooking.reservation.ReservationRepository;
 import com.truc.eventbooking.reservation.ReservationService;
 import com.truc.eventbooking.seat.SeatRepository;
 import com.truc.eventbooking.seat.SeatService;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import com.truc.eventbooking.booking.dto.BookingResponse;
 import com.truc.eventbooking.booking.dto.CreateBookingRequest;
@@ -33,6 +34,7 @@ public class BookingService {
         this.reservationService = reservationService;
     }
 
+    @Transactional
     public BookingResponse createBooking(CreateBookingRequest request) {
         Long reservationId = request.reservationId();
         Long customerId = request.customerId();

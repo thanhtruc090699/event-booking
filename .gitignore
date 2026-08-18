@@ -4,6 +4,11 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+postgres-data/
+.idea/
+*.iml
+.env
+
 ### STS ###
 .apt_generated
 .classpath

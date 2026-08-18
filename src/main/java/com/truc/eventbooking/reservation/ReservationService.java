@@ -5,6 +5,7 @@ import com.truc.eventbooking.common.exception.NotFoundException;
 import com.truc.eventbooking.seat.Seat;
 import com.truc.eventbooking.seat.SeatRepository;
 import com.truc.eventbooking.seat.SeatService;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import com.truc.eventbooking.reservation.dto.CreateReservationRequest;
 import com.truc.eventbooking.reservation.dto.ReservationResponse;
@@ -30,6 +31,8 @@ public class ReservationService {
     public ReservationResponse getReservationBySeatId(Long seatId) {
         return reservationRepository.findBySeat_SeatId(seatId).map(this::toReservationResponse).orElseThrow(()-> new RuntimeException("Reservation not found"));
     }
+
+    @Transactional
     public ReservationResponse createReservation(CreateReservationRequest createReservationRequest) {
         Long seatId = createReservationRequest.eventSeatId();
 
