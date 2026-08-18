@@ -2,21 +2,36 @@ package com.truc.eventbooking.event;
 
 import java.time.OffsetDateTime;
 
-public class Event {
-    private final Long id;
-    private final String name;
-    private final String description;
-    private final String venueName;
-    private final OffsetDateTime startTime;
+import jakarta.persistence.*;
 
-    public Event(Long id, String name, String description, String venueName, OffsetDateTime startTime) {
-        this.id = id;
+@Entity
+@Table(name = "events")
+public class Event {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "event_id")
+    private Long id;
+
+    @Column(nullable = false)
+    private String name;
+
+    private String description;
+
+    @Column(name = "venue_name", nullable = false)
+    private String venueName;
+
+    @Column(name = "start_time", nullable = false)
+    private OffsetDateTime startTime;
+
+    protected Event() {}
+
+    public Event(String name, String description, String venueName, OffsetDateTime startTime) {
         this.name = name;
         this.description = description;
         this.venueName = venueName;
         this.startTime = startTime;
     }
-    public long getId() {
+    public Long getId() {
         return id;
     }
     public String getName() {

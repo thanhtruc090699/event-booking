@@ -1,27 +1,50 @@
 package com.truc.eventbooking.seat;
 
 import com.truc.eventbooking.event.Event;
+import jakarta.persistence.*;
 
+import java.math.BigDecimal;
+
+@Entity
+@Table(name="event_seats")
 public class Seat {
-    private final Long eventId;
-    private final Long seatId;
-    private final String section;
-    private final String rowLabel;
-    private final String seatNumber;
-    private final Double seatPrice;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "seat_id")
+    private Long seatId;
+
+    @ManyToOne(optional=false)
+    @JoinColumn(name = "event_id", nullable = false)
+    private Event event;
+
+    @Column(nullable = false)
+    private String section;
+
+    @Column(name = "row_label", nullable = false)
+    private String rowLabel;
+
+    @Column(name = "seat_number", nullable = false)
+    private String seatNumber;
+
+    @Column(name = "seat_price", nullable = false)
+    private BigDecimal seatPrice;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "seat_status", nullable = false)
     private SeatStatus seatStatus;
 
-    public Seat (Long eventId, Long seatId, String section, String rowLabel, String seatNumber, Double seatPrice, SeatStatus status) {
-        this.eventId = eventId;
-        this.seatId = seatId;
+    protected Seat() {}
+
+    public Seat (Event event, String section, String rowLabel, String seatNumber, BigDecimal seatPrice, SeatStatus status) {
+        this.event = event;
         this.section = section;
         this.rowLabel = rowLabel;
         this.seatNumber = seatNumber;
         this.seatPrice = seatPrice;
         this.seatStatus = status;
     }
-    public Long getEventId() {
-        return eventId;
+    public Event getEvent() {
+        return event;
     }
     public Long getSeatId() {
         return seatId;
@@ -35,7 +58,7 @@ public class Seat {
     public String getSeatNumber() {
         return seatNumber;
     }
-    public Double getSeatPrice() {
+    public BigDecimal getSeatPrice() {
         return seatPrice;
     }
     public SeatStatus getSeatStatus() {
