@@ -1,7 +1,9 @@
 package com.truc.eventbooking.booking.dto;
 
+import jakarta.validation.constraints.NotNull;
+
 public record CreateBookingRequest (
-        Long reservationId,
-        Long customerId
+        @NotNull Long reservationId,
+        @NotNull Long customerId
 ){
 }
