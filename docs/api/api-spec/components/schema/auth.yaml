@@ -1,0 +1,55 @@
+RegisterRequest:
+  type: object
+  required:
+    - email
+    - password
+    - fullName
+  properties:
+    email:
+      type: string
+      format: email
+    password:
+      type: string
+      format: password
+    fullName:
+      type: string
+
+RegisterResponse:
+  type: object
+  properties:
+    customerId:
+      type: integer
+      format: int64
+    email:
+      type: string
+      format: email
+    fullName:
+      type: string
+
+LoginRequest:
+  type: object
+  required:
+    - email
+    - password
+  properties:
+    email:
+      type: string
+      format: email
+    password:
+      type: string
+      format: password
+
+LoginResponse:
+  type: object
+  properties:
+    accessToken:
+      type: string
+    tokenType:
+      type: string
+      example: "Bearer"
+    expiresIn:
+      type: integer
+      example: 3600
+
+
+
