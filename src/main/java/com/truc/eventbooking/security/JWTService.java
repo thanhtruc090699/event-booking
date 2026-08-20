@@ -1,12 +1,12 @@
 package com.truc.eventbooking.security;
 
 import com.truc.eventbooking.auth.Customer;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
@@ -37,4 +37,34 @@ public class JWTService {
     public long getExpirationMs(){
         return expirationMs;
     }
+
+    private Claims getClaimsFromToken(String token) {
+        return Jwts.parser().verifyWith(secretKey).build().parseClaimsJws(token).getPayload();
+    }
+
+    public String extractEmail(String token) {
+        return getClaimsFromToken(token).getSubject();
+    }
+    public String extractfullName(String token) {
+        return getClaimsFromToken(token).get("fullName").toString();
+    }
+    public Long extractCustomerId(String token) {
+        Number customerId = getClaimsFromToken(token).get("customerId", Number.class);
+        return customerId.longValue();
+    }
+    public Date extractExpiration(String token) {
+        return getClaimsFromToken(token).getExpiration();
+    }
+    public boolean isExpired(String token) {
+        Date expiration = extractExpiration(token);
+        return expiration.before(new Date());
+    }
+    public boolean isValidToken(String token, Customer customer) {
+        String email = extractEmail(token);
+        Long customerId = extractCustomerId(token);
+
+        return email.equals(customer.getEmail()) && customerId.equals(customer.getCustomerId())
+                && !isExpired(token);
+    }
+
 }
