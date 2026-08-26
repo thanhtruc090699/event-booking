@@ -17,9 +17,6 @@ public class Booking {
     @JoinColumn(name="reservation_id",nullable = false,unique = true)
     private Reservation reservation;
 
-    @Column(name="customer_id",nullable = false)
-    private Long CustomerID;
-
     @Column(name = "ticket_code",nullable = false)
     private String ticketCode;
 
@@ -31,9 +28,8 @@ public class Booking {
     private OffsetDateTime createdAt;
 
     protected Booking() {}
-    public Booking(Reservation reservation, Long CustomerID, String ticketCode) {
+    public Booking(Reservation reservation, String ticketCode) {
         this.reservation = reservation;
-        this.CustomerID = CustomerID;
         this.ticketCode = ticketCode;
         this.status = BookingStatus.CONFIRMED;
         this.createdAt = OffsetDateTime.now();
@@ -53,9 +49,7 @@ public class Booking {
     public OffsetDateTime getCreatedAt() {
         return createdAt;
     }
-    public Long getCustomerID() {
-        return CustomerID;
-    }
+
     public void setStatus(BookingStatus status) {
         this.status = status;
     }

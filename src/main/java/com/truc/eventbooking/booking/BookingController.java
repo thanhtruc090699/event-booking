@@ -1,5 +1,8 @@
 package com.truc.eventbooking.booking;
 
+import com.truc.eventbooking.security.CustomerUserPrincipal;
+import jakarta.validation.Valid;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 import com.truc.eventbooking.booking.dto.BookingResponse;
@@ -17,8 +20,9 @@ public class BookingController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public BookingResponse createBooking(@RequestBody CreateBookingRequest request) {
-        return bookingService.createBooking(request);
+    public BookingResponse createBooking(@Valid @RequestBody CreateBookingRequest request,
+                                         @AuthenticationPrincipal CustomerUserPrincipal principal) {
+        return bookingService.createBooking(request,principal.getCustomerId());
     }
 
     @GetMapping

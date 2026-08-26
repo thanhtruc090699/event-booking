@@ -35,16 +35,15 @@ public class BookingService {
     }
 
     @Transactional
-    public BookingResponse createBooking(CreateBookingRequest request) {
+    public BookingResponse createBooking(CreateBookingRequest request, Long customerId) {
         Long reservationId = request.reservationId();
-        Long customerId = request.customerId();
 
-        Reservation reservation = reservationRepository.findById(reservationId).orElseThrow(()-> new RuntimeException("Reservation not found"));
+        Reservation reservation = reservationRepository.findById(reservationId).orElseThrow(()-> new BusinessConflictException("RESERVATION_NOT_FOUND","Reservation not found"));
 
-        if(customerId!=reservation.getCustomerId()) throw new BusinessConflictException("Customer_ID_MISMATCH","Customer id mismatch");
+        if(customerId!=reservation.getCustomer().getCustomerId()) throw new BusinessConflictException("Customer_ID_MISMATCH","Customer id mismatch");
 
 
-        PaymentStatus paymentStatus = paymentService.pay(request.customerId(), reservationId);
+        PaymentStatus paymentStatus = paymentService.pay(customerId, reservationId);
         if(paymentStatus!=PaymentStatus.SUCCEEDED){
             reservationService.markAsCancelled(reservationId);
             throw new BusinessConflictException("PAYMENT_FAILED","Payment failed");
@@ -52,7 +51,7 @@ public class BookingService {
 
         reservationService.markAsConfirmed(reservationId);
         String ticketCode = generatedTicketCode();
-        Booking booking = new Booking(reservation,customerId,ticketCode);
+        Booking booking = new Booking(reservation,ticketCode);
         Booking savedBooking = bookingRepository.save(booking);
 
         return toBookingResponse(savedBooking);
@@ -69,8 +68,7 @@ public class BookingService {
 
     private CreateBookingRequest toCreateBookingRequest(Booking booking) {
         return new CreateBookingRequest(
-                booking.getReservation().getReservationId(),
-                booking.getCustomerID()
+                booking.getReservation().getReservationId()
         );
     }
     private BookingResponse toBookingResponse(Booking booking) {

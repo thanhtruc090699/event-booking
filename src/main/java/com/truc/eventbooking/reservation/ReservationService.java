@@ -1,5 +1,8 @@
 package com.truc.eventbooking.reservation;
 
+import com.truc.eventbooking.auth.AuthRepository;
+import com.truc.eventbooking.auth.AuthService;
+import com.truc.eventbooking.auth.Customer;
 import com.truc.eventbooking.common.exception.BusinessConflictException;
 import com.truc.eventbooking.common.exception.NotFoundException;
 import com.truc.eventbooking.seat.Seat;
@@ -17,9 +20,13 @@ import java.util.List;
 public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final SeatService seatService;
-    public ReservationService(ReservationRepository reservationRepository, SeatRepository seatRepository, SeatService seatService) {
+    private final AuthRepository authRepository;
+    public ReservationService(ReservationRepository reservationRepository,
+                              SeatRepository seatRepository, SeatService seatService,
+                              AuthRepository  authRepository) {
         this.reservationRepository = reservationRepository;
         this.seatService = seatService;
+        this.authRepository = authRepository;
     }
     public List<ReservationResponse> getAllReservations() {
         return reservationRepository.findAll().stream().map(this::toReservationResponse).toList();
@@ -33,12 +40,16 @@ public class ReservationService {
     }
 
     @Transactional
-    public ReservationResponse createReservation(CreateReservationRequest createReservationRequest) {
+    public ReservationResponse createReservation(CreateReservationRequest createReservationRequest, Long customerId) {
         Long seatId = createReservationRequest.eventSeatId();
 
         Seat seat = seatService.markAsReserved(seatId);
 
-        Reservation reservation = new Reservation(seat,createReservationRequest.customerId());
+        Customer customer = authRepository.findById(customerId).orElseThrow(
+                () -> new NotFoundException("CUSTOMER_NOT_FOUND","CUSTOMER_NOT_FOUND")
+        );
+
+        Reservation reservation = new Reservation(seat,customer);
 
         Reservation savedReservation = reservationRepository.save(reservation);
         return toReservationResponse(savedReservation);
@@ -87,15 +98,14 @@ public class ReservationService {
         return new ReservationResponse(
                 reservation.getReservationId(),
                 reservation.getSeat().getSeatId(),
-                reservation.getCustomerId(),
+                reservation.getCustomer().getCustomerId(),
                 reservation.getStatus(),
                 reservation.getExpiryDate()
         );
     }
     private CreateReservationRequest toCreateReservationRequest(Reservation reservation) {
         return new CreateReservationRequest(
-                reservation.getSeat().getSeatId(),
-                reservation.getCustomerId()
+                reservation.getSeat().getSeatId()
         );
     }
 }

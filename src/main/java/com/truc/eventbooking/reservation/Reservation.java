@@ -1,5 +1,6 @@
 package com.truc.eventbooking.reservation;
 
+import com.truc.eventbooking.auth.Customer;
 import com.truc.eventbooking.seat.Seat;
 import jakarta.persistence.*;
 
@@ -18,8 +19,9 @@ public class Reservation {
     @JoinColumn(name="seat_id",nullable = false,unique = true)
     private Seat seat;
 
-    @Column(name = "customer_id",nullable = false)
-    private Long CustomerId;
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id",nullable = false)
+    private Customer customer;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "reservation_status",nullable = false, updatable = false)
@@ -33,9 +35,9 @@ public class Reservation {
 
     protected Reservation(){}
 
-    public Reservation(Seat seat, Long CustomerId) {
+    public Reservation(Seat seat, Customer customer) {
         this.seat = seat;
-        this.CustomerId = CustomerId;
+        this.customer = customer;
         this.status = ReservationStatus.ACTIVE;
         this.expiryDate = OffsetDateTime.now().plusMinutes(5);
         this.reservedAt = OffsetDateTime.now();
@@ -47,8 +49,8 @@ public class Reservation {
     public Seat getSeat() {
         return seat;
     }
-    public Long getCustomerId() {
-        return CustomerId;
+    public Customer getCustomer() {
+        return customer;
     }
     public ReservationStatus getStatus() {
         return status;
