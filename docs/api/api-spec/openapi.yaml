@@ -49,6 +49,13 @@ paths:
 
   /api/auth/login:
     $ref: "./paths/auth.yaml#/login"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
 security: []
 
 

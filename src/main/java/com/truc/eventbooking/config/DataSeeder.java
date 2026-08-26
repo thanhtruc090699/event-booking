@@ -67,5 +67,54 @@ public class DataSeeder implements CommandLineRunner {
                 "01",
                 new BigDecimal(99.00),
                 SeatStatus.AVAILABLE));
+
+        seatRepository.save(new Seat(event1,
+                "A",
+                "1",
+                "15",
+                new BigDecimal(49.99),
+                SeatStatus.AVAILABLE));
+
+        seatRepository.save(new Seat(event1,
+                "A",
+                "1",
+                "16",
+                new BigDecimal(49.99),
+                SeatStatus.AVAILABLE));
+
+        seatRepository.save(new Seat(event1,
+                "B",
+                "2",
+                "01",
+                new BigDecimal(39.99),
+                SeatStatus.AVAILABLE));
+
+        seatRepository.save(new Seat(event1,
+                "B",
+                "2",
+                "02",
+                new BigDecimal(39.99),
+                SeatStatus.AVAILABLE));
+
+        seatRepository.save(new Seat(event2,
+                "A",
+                "1",
+                "01",
+                new BigDecimal(120.00),
+                SeatStatus.AVAILABLE));
+
+        seatRepository.save(new Seat(event2,
+                "A",
+                "1",
+                "02",
+                new BigDecimal(120.00),
+                SeatStatus.AVAILABLE));
+
+        seatRepository.save(new Seat(event2,
+                "B",
+                "2",
+                "03",
+                new BigDecimal(89.00),
+                SeatStatus.AVAILABLE));
     }
 }

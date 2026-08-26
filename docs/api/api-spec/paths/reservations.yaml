@@ -3,6 +3,8 @@ reservations:
     tags:
       - Reservations
     summary: Create a seat reservation
+    security:
+      - bearerAuth: []
     operationId: createReservation
     requestBody:
       required: true

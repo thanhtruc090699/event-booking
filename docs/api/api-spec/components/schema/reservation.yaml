@@ -8,10 +8,6 @@ CreateReservationRequest:
       type: integer
       format: int64
       example: 1001
-    customerId:
-      type: integer
-      format: int64
-      example: 1
 
 ReservationResponse:
   type: object

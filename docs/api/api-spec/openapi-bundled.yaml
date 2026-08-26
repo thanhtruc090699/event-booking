@@ -104,6 +104,8 @@ paths:
       tags:
         - Reservations
       summary: Create a seat reservation
+      security:
+        - bearerAuth: []
       operationId: createReservation
       requestBody:
         required: true
@@ -155,6 +157,8 @@ paths:
       tags:
         - Bookings
       summary: Confirm booking from reservation
+      security:
+        - bearerAuth: []
       operationId: createBooking
       requestBody:
         required: true
@@ -239,6 +243,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/auth/login:
     post:
       tags:
@@ -251,7 +261,7 @@ paths:
             schema:
               $ref: '#/components/schemas/LoginRequest'
       responses:
-        '201':
+        '200':
           description: Successfully log in
           content:
             application/jon:
@@ -264,6 +274,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
     EventSummaryResponse:
       type: object
@@ -369,10 +384,6 @@ components:
           type: integer
           format: int64
           example: 1001
-        customerId:
-          type: integer
-          format: int64
-          example: 1
     ReservationResponse:
       type: object
       required:
@@ -442,10 +453,6 @@ components:
           type: integer
           format: int64
           example: 5001
-        customerId:
-          type: integer
-          format: int64
-          example: 1
     RegisterRequest:
       type: object
       required:

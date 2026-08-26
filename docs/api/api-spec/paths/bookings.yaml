@@ -17,6 +17,8 @@ bookings:
     tags:
       - Bookings
     summary: Confirm booking from reservation
+    security:
+      - bearerAuth: []
     operationId: createBooking
     requestBody:
       required: true
