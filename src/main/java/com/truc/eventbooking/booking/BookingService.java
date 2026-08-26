@@ -1,6 +1,7 @@
 package com.truc.eventbooking.booking;
 
 import com.truc.eventbooking.common.exception.BusinessConflictException;
+import com.truc.eventbooking.common.exception.ForbiddenException;
 import com.truc.eventbooking.payment.MockPaymentService;
 import com.truc.eventbooking.payment.PaymentStatus;
 import com.truc.eventbooking.reservation.Reservation;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import com.truc.eventbooking.booking.dto.BookingResponse;
 import com.truc.eventbooking.booking.dto.CreateBookingRequest;
 
+import java.awt.*;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -40,7 +42,7 @@ public class BookingService {
 
         Reservation reservation = reservationRepository.findById(reservationId).orElseThrow(()-> new BusinessConflictException("RESERVATION_NOT_FOUND","Reservation not found"));
 
-        if(customerId!=reservation.getCustomer().getCustomerId()) throw new BusinessConflictException("Customer_ID_MISMATCH","Customer id mismatch");
+        if(customerId!=reservation.getCustomer().getCustomerId()) throw new ForbiddenException("RESERVATION_ACCESS_DENIED","You are not allowed to book this reservation");
 
 
         PaymentStatus paymentStatus = paymentService.pay(customerId, reservationId);
