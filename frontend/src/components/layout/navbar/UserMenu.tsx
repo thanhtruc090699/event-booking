@@ -48,7 +48,7 @@ export function UserMenu({
             <button
                 type="button"
                 onClick={onSignOut}
-                className="rounded-lg border border-[var(--border)] bg-transparent px-5 py-2.5 text-sm font-semibold text-[var(--muted)] transition hover:bg-[var(--surface)] hover:text-[var(--ink)]"
+                className="rounded-lg px-4 py-2 text-sm font-semibold text-[var(--muted)] transition hover:text-[var(--ink)]"
             >
                 Sign out
             </button>
