@@ -1,4 +1,5 @@
 import { EventCard } from "@/features/events/components/EventCard";
+import Link from "next/link";
 
 const upcomingEvents = [
     {
@@ -39,9 +40,12 @@ export function UpcomingEventsSection() {
                     Upcoming Near You
                 </h2>
 
-                <button className="text-xs font-medium text-[var(--muted)] transition hover:text-[var(--ink)]">
+                <Link
+                    href="/events"
+                    className="text-xs font-medium text-[var(--muted)] transition hover:text-[var(--ink)]"
+                >
                     View all →
-                </button>
+                </Link>
             </div>
 
             <div className="flex gap-4 overflow-x-auto pb-3">

@@ -47,7 +47,6 @@ export function Navbar() {
             <Logo />
 
             <div className="flex items-center justify-center gap-[6px]">
-                <NavItem href="/">Home</NavItem>
 
                 {isLoggedIn && (
                     <NavItem href="/tickets">

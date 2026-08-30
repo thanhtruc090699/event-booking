@@ -1,8 +1,8 @@
 "use client";
 
-import { Search } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/cn";
+import { SearchBox } from "@/features/events/components/SearchBox";
 
 const categories = ["All", "Concert", "Festival", "Theatre", "Sports"];
 
@@ -15,34 +15,7 @@ export function SearchSection() {
                 Explore Events
             </h2>
 
-            <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center">
-                <div className="flex h-12 w-full items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 md:max-w-xl md:flex-1">
-                    <Search className="h-4 w-4 text-[var(--muted)]" />
-
-                    <input
-                        type="text"
-                        placeholder="Search events, cities, venues..."
-                        className="w-full bg-transparent text-sm text-[var(--ink)] outline-none placeholder:text-[var(--muted)]"
-                    />
-                </div>
-
-                <select
-                    aria-label="City"
-                    className="h-12 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 text-sm text-[var(--muted)] outline-none transition focus:border-zinc-600 focus:text-[var(--ink)]"
-                >
-                    <option>All cities</option>
-                    <option>Berlin</option>
-                    <option>Hamburg</option>
-                    <option>Munich</option>
-                    <option>Frankfurt</option>
-                </select>
-
-                <input
-                    type="date"
-                    aria-label="Event date"
-                    className="h-12 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 text-sm text-[var(--muted)] outline-none transition focus:border-zinc-600 focus:text-[var(--ink)]"
-                />
-            </div>
+            <SearchBox />
 
             <div className="mt-5 flex flex-wrap gap-3">
                 {categories.map((category) => (

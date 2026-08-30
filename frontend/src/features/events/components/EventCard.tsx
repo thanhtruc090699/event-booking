@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cn } from "@/lib/cn";
 
 type EventCardProps = {
     id: number;
@@ -6,6 +7,8 @@ type EventCardProps = {
     venue: string;
     date: string;
     imageUrl: string;
+    hot?: boolean;
+    className?: string;
 };
 
 export function EventCard({
@@ -14,17 +17,27 @@ export function EventCard({
                               venue,
                               date,
                               imageUrl,
+                              hot = false,
+                              className,
                           }: EventCardProps) {
     return (
         <Link
             href={`/events/${id}`}
-            className="group relative min-w-[220px] overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] transition hover:-translate-y-1 hover:bg-[var(--surface-hover)]"
+            className={cn(
+                "group relative block min-w-[220px] overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] transition hover:-translate-y-1 hover:bg-[var(--surface-hover)]",
+                className
+            )}
         >
-            <div
-                className="h-[120px] w-full bg-cover bg-center"
-                style={{
-                    backgroundImage: `url(${imageUrl})`,
-                }}
+            {hot && (
+                <span className="absolute left-2 top-2 z-10 rounded-md bg-[var(--crimson)] px-2 py-1 text-[10px] font-bold tracking-wide text-[var(--ink)]">
+                    HOT
+                </span>
+            )}
+
+            <img
+                src={imageUrl}
+                alt={title}
+                className="h-[120px] w-full object-cover"
             />
 
             <div className="p-3">
