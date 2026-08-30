@@ -1,0 +1,153 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { signInMockUser } from "@/features/auth/lib/mockAuth";
+
+export function RegisterPage() {
+    const router = useRouter();
+
+    function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        signInMockUser();
+        router.push("/");
+    }
+
+    function handleSocialRegister() {
+        signInMockUser();
+        router.push("/");
+    }
+
+    return (
+        <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-5 py-16">
+            <AuthBackground />
+
+            <section className="relative z-10 w-full max-w-[400px] rounded-[18px] border border-[var(--border)] bg-[var(--surface)] px-8 py-9">
+                <div className="mb-2 text-center text-2xl tracking-tight text-[var(--ink)]">
+                    STAGE<span className="text-[var(--crimson)]">PASS</span>
+                </div>
+
+                <h1 className="text-center font-[var(--font-bebas)] text-4xl tracking-wide text-[var(--ink)]">
+                    Create account
+                </h1>
+
+                <p className="mt-1 text-center text-sm text-[var(--muted)]">
+                    Book events in seconds.
+                </p>
+
+                <div className="mt-7 space-y-3">
+                    <button
+                        type="button"
+                        onClick={handleSocialRegister}
+                        className="flex w-full items-center justify-center rounded-lg border border-[var(--border)] bg-[#f2f2f5] px-4 py-3 text-sm font-semibold text-[#1f1f24]"
+                    >
+                        Continue with Google
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={handleSocialRegister}
+                        className="flex w-full items-center justify-center rounded-lg border border-[#1877F2] bg-[#1877F2] px-4 py-3 text-sm font-semibold text-white"
+                    >
+                        Continue with Facebook
+                    </button>
+                </div>
+
+                <div className="my-5 flex items-center gap-3 text-xs text-[var(--muted)]">
+                    <div className="h-px flex-1 bg-[var(--border)]" />
+                    or
+                    <div className="h-px flex-1 bg-[var(--border)]" />
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label className="mb-2 block text-xs text-[var(--muted)]">
+                            Name
+                        </label>
+                        <input
+                            type="text"
+                            placeholder="Truc Nguyen"
+                            className="w-full rounded-lg border border-[var(--border)] bg-[var(--void)] px-4 py-3 text-sm text-[var(--ink)] outline-none placeholder:text-[var(--muted)] focus:border-[var(--gold)]"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="mb-2 block text-xs text-[var(--muted)]">
+                            Email
+                        </label>
+                        <input
+                            type="email"
+                            placeholder="you@example.com"
+                            className="w-full rounded-lg border border-[var(--border)] bg-[var(--void)] px-4 py-3 text-sm text-[var(--ink)] outline-none placeholder:text-[var(--muted)] focus:border-[var(--gold)]"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="mb-2 block text-xs text-[var(--muted)]">
+                            Password
+                        </label>
+                        <input
+                            type="password"
+                            placeholder="••••••••"
+                            className="w-full rounded-lg border border-[var(--border)] bg-[var(--void)] px-4 py-3 text-sm text-[var(--ink)] outline-none placeholder:text-[var(--muted)] focus:border-[var(--gold)]"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="mb-2 block text-xs text-[var(--muted)]">
+                            Confirm password
+                        </label>
+                        <input
+                            type="password"
+                            placeholder="••••••••"
+                            className="w-full rounded-lg border border-[var(--border)] bg-[var(--void)] px-4 py-3 text-sm text-[var(--ink)] outline-none placeholder:text-[var(--muted)] focus:border-[var(--gold)]"
+                        />
+                    </div>
+
+                    <button
+                        type="submit"
+                        className="w-full rounded-lg bg-[var(--crimson)] px-4 py-3 text-sm font-bold text-[var(--ink)] transition hover:bg-[var(--crimson-dim)]"
+                    >
+                        Create Account
+                    </button>
+                </form>
+
+                <p className="mt-5 text-center text-sm text-[var(--muted)]">
+                    Already have an account?{" "}
+                    <Link
+                        href="/login"
+                        className="font-semibold text-[var(--gold)]"
+                    >
+                        Sign in
+                    </Link>
+                </p>
+            </section>
+        </main>
+    );
+}
+
+function AuthBackground() {
+    const images = [
+        "https://picsum.photos/seed/event-1/500/500",
+        "https://picsum.photos/seed/event-3/500/500",
+        "https://picsum.photos/seed/event-5/500/500",
+        "https://picsum.photos/seed/event-6/500/500",
+        "https://picsum.photos/seed/event-4/500/500",
+    ];
+
+    return (
+        <div className="absolute inset-0">
+            <div className="grid h-full grid-cols-3 grid-rows-2 opacity-35">
+                {images.map((image) => (
+                    <div
+                        key={image}
+                        className="bg-cover bg-center"
+                        style={{ backgroundImage: `url(${image})` }}
+                    />
+                ))}
+            </div>
+
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(10,10,12,0.55)_0%,var(--void)_75%)]" />
+        </div>
+    );
+}
