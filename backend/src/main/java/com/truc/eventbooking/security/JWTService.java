@@ -14,11 +14,28 @@ import java.util.Date;
 public class JWTService {
     private final SecretKey secretKey;
     private  final long expirationMs;
+    private final long refreshExpirationMs;
 
     public JWTService(@Value("${app.jwt.secret}") String secret,
-                      @Value("${app.jwt.expiration-ms}") long expirationMs) {
+                      @Value("${app.jwt.access-expiration-ms}") long expirationMs,
+                      @Value("${app.jwt.refresh-expiration-ms}") long refreshExpirationMs) {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.expirationMs = expirationMs;
+        this.refreshExpirationMs = refreshExpirationMs;
+    }
+
+    public String generateRefreshToken(Customer customer){
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + refreshExpirationMs);
+        return Jwts.builder()
+                .subject(customer.getEmail())
+                .claim("customerId", customer.getCustomerId())
+                .claim("fullName", customer.getFullName())
+                .claim("type", "REFRESH")
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(secretKey)
+                .compact();
     }
 
     public String generateToken(Customer customer) {
@@ -34,8 +51,13 @@ public class JWTService {
                 .compact();
 
     }
+
     public long getExpirationMs(){
         return expirationMs;
+    }
+
+    public long getRefreshExpirationMs() {
+        return refreshExpirationMs;
     }
 
     private Claims getClaimsFromToken(String token) {
@@ -45,20 +67,25 @@ public class JWTService {
     public String extractEmail(String token) {
         return getClaimsFromToken(token).getSubject();
     }
+
     public String extractfullName(String token) {
         return getClaimsFromToken(token).get("fullName").toString();
     }
+
     public Long extractCustomerId(String token) {
         Number customerId = getClaimsFromToken(token).get("customerId", Number.class);
         return customerId.longValue();
     }
+
     public Date extractExpiration(String token) {
         return getClaimsFromToken(token).getExpiration();
     }
+
     public boolean isExpired(String token) {
         Date expiration = extractExpiration(token);
         return expiration.before(new Date());
     }
+
     public boolean isValidToken(String token, Customer customer) {
         String email = extractEmail(token);
         Long customerId = extractCustomerId(token);

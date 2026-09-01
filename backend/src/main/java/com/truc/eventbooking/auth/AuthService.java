@@ -49,11 +49,14 @@ public class AuthService {
         if(!passwordMatches) {
             throw new BusinessConflictException("PASSWORD_MISMATCH", "Password does not match");
         }
-        String token = jwtService.generateToken(customer);
+        String accessToken = jwtService.generateToken(customer);
+        String refreshToken = jwtService.generateRefreshToken(customer);
         return new LoginResponse(
-                token,
+                accessToken,
+                refreshToken,
                 "Bearer",
-                jwtService.getExpirationMs() / 1000
+                jwtService.getExpirationMs() / 1000,
+                jwtService.getRefreshExpirationMs() / 1000
         );
     }
     private RegisterResponse toRegisterResponse(Customer customer) {
