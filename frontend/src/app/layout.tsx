@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Bebas_Neue, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/layout/navbar/Navbar";
+import { Footer } from "@/components/layout/footer/Footer";
 
 const inter = Inter({
   subsets: ["latin", "vietnamese"],
@@ -36,6 +37,7 @@ export default function RootLayout({
       >
       <Navbar />
       {children}
+      <Footer />
       </body>
       </html>
   );

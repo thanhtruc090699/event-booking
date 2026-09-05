@@ -86,12 +86,24 @@ public class JWTService {
         return expiration.before(new Date());
     }
 
+    public String extractTokenType(String token) {
+        return getClaimsFromToken(token).get("type").toString();
+    }
+
     public boolean isValidToken(String token, Customer customer) {
         String email = extractEmail(token);
         Long customerId = extractCustomerId(token);
 
         return email.equals(customer.getEmail()) && customerId.equals(customer.getCustomerId())
                 && !isExpired(token);
+    }
+
+    public boolean isValidAccessToken(String accessToken, Customer customer){
+        return isValidToken(accessToken, customer) && extractTokenType(accessToken).equals("ACCESS");
+    }
+
+    public boolean isValidRefreshToken(String accessToken, Customer customer){
+        return isValidToken(accessToken, customer) && extractTokenType(accessToken).equals("REFRESH");
     }
 
 }
