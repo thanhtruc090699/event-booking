@@ -3,6 +3,8 @@ import { Bebas_Neue, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/layout/navbar/Navbar";
 import { Footer } from "@/components/layout/footer/Footer";
+import { AuthProvider } from "@/features/auth/context/AuthContext";
+
 
 const inter = Inter({
   subsets: ["latin", "vietnamese"],
@@ -36,7 +38,9 @@ export default function RootLayout({
           className={`${inter.variable} ${bebasNeue.variable} ${jetbrainsMono.variable} font-[var(--font-inter)] antialiased`}
       >
       <Navbar />
-      {children}
+      <AuthProvider>
+        {children}
+      </AuthProvider>
       <Footer />
       </body>
       </html>
