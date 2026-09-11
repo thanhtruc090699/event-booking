@@ -3,18 +3,29 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signInMockUser } from "@/features/auth/lib/mockAuth";
+import { useState } from "react";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 
 export function LoginPage() {
     const router = useRouter();
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const { login, isLoading } = useAuth();
+    const [error, setError] = useState("");
 
-    function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-        signInMockUser();
-        router.push("/");
+    async function handleLogin(e: React.FormEvent){
+        e.preventDefault();
+        try {
+            await login(email, password);
+            router.push("/");
+        } catch (error) {
+            console.error(error);
+            setError("Invalid email or password");
+        }
     }
 
-    function handleSocialLogin() {
-        signInMockUser();
+    async function handleSocialLogin() {
+        await signInMockUser();
         router.push("/");
     }
 
@@ -68,7 +79,7 @@ export function LoginPage() {
                     <div className="h-px flex-1 bg-[var(--border)]" />
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleLogin} className="space-y-4">
                     <div>
                         <label className="mb-2 block text-xs text-[var(--muted)]">
                             Email
@@ -76,6 +87,8 @@ export function LoginPage() {
                         <input
                             type="email"
                             placeholder="you@example.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
                             className="w-full rounded-lg border border-[var(--border)] bg-[var(--void)] px-4 py-3 text-sm text-[var(--ink)] outline-none placeholder:text-[var(--muted)] focus:border-[var(--gold)]"
                         />
                     </div>
@@ -86,16 +99,23 @@ export function LoginPage() {
                         </label>
                         <input
                             type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
                             placeholder="••••••••"
                             className="w-full rounded-lg border border-[var(--border)] bg-[var(--void)] px-4 py-3 text-sm text-[var(--ink)] outline-none placeholder:text-[var(--muted)] focus:border-[var(--gold)]"
                         />
                     </div>
 
+                    {error && (
+                        <p className="mb-4 text-sm text-red-500">{error}</p>
+                    )}
+
                     <button
                         type="submit"
+                        disabled={isLoading}
                         className="w-full rounded-lg bg-[var(--crimson)] px-4 py-3 text-sm font-bold text-[var(--ink)] transition hover:bg-[var(--crimson-dim)]"
                     >
-                        Sign In
+                        {isLoading ? "Signing in..." : "Sign in"}
                     </button>
                 </form>
 

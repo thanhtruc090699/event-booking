@@ -45,6 +45,7 @@ public class JWTService {
                 .subject(customer.getEmail())
                 .claim("customerId", customer.getCustomerId())
                 .claim("fullName", customer.getFullName())
+                .claim("type", "ACCESS")
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(secretKey)
@@ -102,8 +103,8 @@ public class JWTService {
         return isValidToken(accessToken, customer) && extractTokenType(accessToken).equals("ACCESS");
     }
 
-    public boolean isValidRefreshToken(String accessToken, Customer customer){
-        return isValidToken(accessToken, customer) && extractTokenType(accessToken).equals("REFRESH");
+    public boolean isValidRefreshToken(String refreshToken, Customer customer){
+        return isValidToken(refreshToken, customer) && extractTokenType(refreshToken).equals("REFRESH");
     }
 
 }

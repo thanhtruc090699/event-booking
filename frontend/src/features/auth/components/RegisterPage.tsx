@@ -3,14 +3,44 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signInMockUser } from "@/features/auth/lib/mockAuth";
+import { useState } from "react";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { register } from "@/features/auth/api/authApi";
 
 export function RegisterPage() {
     const router = useRouter();
 
-    function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-        signInMockUser();
-        router.push("/");
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [error, setError] = useState("");
+    const { isLoading } = useAuth();
+
+    async function handleSubmit(e: React.FormEvent) {
+        e.preventDefault();
+
+        if (password !== confirmPassword) {
+            setError("Passwords do not match");
+            return;
+        }
+        if(password.length < 6) {
+            setError("Password must be at least 6 characters long");
+            return;
+        }
+
+        try {
+            await register({
+                name,
+                email,
+                password,
+            });
+            router.push("/login");
+
+        } catch (error) {
+            console.error(error);
+            setError("Registration failed. Please try again.");
+        }
     }
 
     function handleSocialRegister() {
@@ -77,6 +107,8 @@ export function RegisterPage() {
                             type="text"
                             placeholder="Truc Nguyen"
                             className="w-full rounded-lg border border-[var(--border)] bg-[var(--void)] px-4 py-3 text-sm text-[var(--ink)] outline-none placeholder:text-[var(--muted)] focus:border-[var(--gold)]"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
                         />
                     </div>
 
@@ -88,6 +120,8 @@ export function RegisterPage() {
                             type="email"
                             placeholder="you@example.com"
                             className="w-full rounded-lg border border-[var(--border)] bg-[var(--void)] px-4 py-3 text-sm text-[var(--ink)] outline-none placeholder:text-[var(--muted)] focus:border-[var(--gold)]"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
                         />
                     </div>
 
@@ -99,6 +133,8 @@ export function RegisterPage() {
                             type="password"
                             placeholder="••••••••"
                             className="w-full rounded-lg border border-[var(--border)] bg-[var(--void)] px-4 py-3 text-sm text-[var(--ink)] outline-none placeholder:text-[var(--muted)] focus:border-[var(--gold)]"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
                         />
                     </div>
 
@@ -110,14 +146,19 @@ export function RegisterPage() {
                             type="password"
                             placeholder="••••••••"
                             className="w-full rounded-lg border border-[var(--border)] bg-[var(--void)] px-4 py-3 text-sm text-[var(--ink)] outline-none placeholder:text-[var(--muted)] focus:border-[var(--gold)]"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
                         />
                     </div>
-
+                    {error && (
+                        <p className="mb-4 text-sm text-red-500">{error}</p>
+                    )}
                     <button
                         type="submit"
+                        disabled={isLoading}
                         className="w-full rounded-lg bg-[var(--crimson)] px-4 py-3 text-sm font-bold text-[var(--ink)] transition hover:bg-[var(--crimson-dim)]"
                     >
-                        Create Account
+                        {isLoading ? "Creating account..." : "Create Account"}
                     </button>
                 </form>
 

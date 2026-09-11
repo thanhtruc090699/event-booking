@@ -1,13 +1,10 @@
 package com.truc.eventbooking.auth;
 
-import com.truc.eventbooking.auth.dto.LoginRequest;
-import com.truc.eventbooking.auth.dto.LoginResponse;
+import com.truc.eventbooking.auth.dto.*;
+import com.truc.eventbooking.common.exception.ForbiddenException;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
-
-import com.truc.eventbooking.auth.dto.RegisterResponse;
-import com.truc.eventbooking.auth.dto.RegisterRequest;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -26,6 +23,20 @@ public class AuthController {
     @PostMapping("/login")
     public LoginResponse login(@Valid @RequestBody LoginRequest loginRequest) {
         return authService.login(loginRequest);
+    }
+
+    @PostMapping("/refresh")
+    public RefreshTokenResponse refresh(@Valid @RequestBody RefreshTokenRequest refreshTokenRequest) {
+        return authService.refreshAccessToken(refreshTokenRequest);
+    }
+
+    @GetMapping("/me")
+    public MeResponse me(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+        if(authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new ForbiddenException("AUTH_REQUIRED","Missing or invalid Authorization header");
+        }
+        String token = authHeader.substring(7);
+        return authService.getCurrentUser(token);
     }
 
 }
