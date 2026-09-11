@@ -60,8 +60,7 @@ public class AuthService {
         );
     }
 
-    public RefreshTokenResponse refreshAccessToken(RefreshTokenRequest request) {
-        String refreshToken = request.refreshToken();
+    public RefreshTokenResponse refreshAccessToken(String refreshToken) {
         try{
             Customer customer = authRepository.findByEmail(jwtService.extractEmail(refreshToken)).orElseThrow(()->new NotFoundException("EMAIL_NOT_FOUND", "Email not found"));
             if(!jwtService.isValidRefreshToken(refreshToken,customer)){

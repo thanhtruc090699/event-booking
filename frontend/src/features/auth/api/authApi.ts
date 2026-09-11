@@ -20,7 +20,10 @@ export type AuthUserDto = {
 
 export type AuthResponse = {
     accessToken: string;
-    user: AuthUserDto;
+    refreshToken: string;
+    tokenType: string;
+    accessTokenExpiresIn: number;
+    refreshTokenExpiresIn: number;
 };
 
 export type RefreshResponse = {
