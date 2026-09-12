@@ -29,6 +29,16 @@ export function RegisterPage() {
             return;
         }
 
+        if (!/[A-Z]/.test(password)) {
+            setError("Password must contain at least one uppercase letter");
+            return;
+        }
+
+        if (!/[^a-zA-Z0-9]/.test(password)) {
+            setError("Password must contain at least one special character");
+            return;
+        }
+
         try {
             await register({
                 fullName: name,

@@ -48,7 +48,7 @@ export function register(request: RegisterRequest) {
     return apiClient<RegisterResponse>("/api/auth/register", {
         method: "POST",
         body: JSON.stringify(request),
-        // no credentials: "include" - access token is in body json, refresh token is in cookie, so no need to include cookies in this request
+        credentials: "include", // Browser will send HttpOnly refresh token cookie automatically with this request
     });
 }
 
