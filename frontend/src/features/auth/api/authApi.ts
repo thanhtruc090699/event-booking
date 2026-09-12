@@ -6,17 +6,10 @@ export type LoginRequest = {
 };
 
 export type RegisterRequest = {
-    name: string;
+    fullName: string;
     email: string;
     password: string;
 };
-
-export type AuthUserDto = {
-    id: number;
-    name: string;
-    email: string;
-    roles: string[];
-}
 
 export type AuthResponse = {
     accessToken: string;
@@ -26,12 +19,20 @@ export type AuthResponse = {
     refreshTokenExpiresIn: number;
 };
 
+export type MeResponse = {
+    customerId: number;
+    email: string;
+    fullName: string;
+};
+
 export type RefreshResponse = {
     accessToken: string;
 };
 
 export type RegisterResponse = {
-    user: AuthUserDto;
+    customerId: number;
+    email: string;
+    fullName: string;
 };
 
 
@@ -39,7 +40,7 @@ export function login(request: LoginRequest) {
     return apiClient<AuthResponse>("/api/auth/login", {
         method: "POST",
         body: JSON.stringify(request),
-        credentials: "include", // Include cookies in the request
+        credentials: "include", // Browser will send HttpOnly refresh token cookie automatically with this request
     });
 }
 
@@ -47,27 +48,26 @@ export function register(request: RegisterRequest) {
     return apiClient<RegisterResponse>("/api/auth/register", {
         method: "POST",
         body: JSON.stringify(request),
-        credentials: "include", // Include cookies in the request
+        // no credentials: "include" - access token is in body json, refresh token is in cookie, so no need to include cookies in this request
     });
 }
 
 export function refreshAccessToken(){
     return apiClient<RefreshResponse>("/api/auth/refresh", {
         method: "POST",
-        credentials: "include", // Include cookies in the request
+        credentials: "include", // Browser will send HttpOnly refresh token cookie automatically with this request
     });
 } 
 
 export function logout() {
     return apiClient<void>("/api/auth/logout", {
         method: "POST",
-        credentials: "include", // Include cookies in the request
+        credentials: "include", // browser will send cookie -> backend will delete it
     });
 }
 
 export function getCurrentUser(token: string) {
-    return apiClient<AuthUserDto>("/api/auth/me", {
+    return apiClient<MeResponse>("/api/auth/me", {
         token,
-        credentials: "include", // Include cookies in the request
     });
 }

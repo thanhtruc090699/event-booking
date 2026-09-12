@@ -1,79 +1,59 @@
 "use client";
 
-import {
-    createContext,
-    useEffect,
-    useState,
-    type ReactNode,
-} from "react";
-
+import { createContext, useEffect, useState, type ReactNode } from "react";
 import {
     login as loginApi,
     getCurrentUser,
     refreshAccessToken,
-    type AuthUserDto,
+    logout as logoutApi,
+    type MeResponse,
 } from "../api/authApi";
 
 interface AuthContextType {
-    user: AuthUserDto | null;
+    user: MeResponse | null;
     accessToken: string | null;
     isAuthenticated: boolean;
     isLoading: boolean;
-
     login: (email: string, password: string) => Promise<void>;
     logout: () => void;
+    updateToken: (token: string) => void;  // để apiClient callback cập nhật
 }
 
-export const AuthContext = createContext<AuthContextType | undefined>(
-    undefined
-);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({
-    children,
-}: {
-    children: ReactNode;
-}) {
-    const [user, setUser] = useState<AuthUserDto | null>(null);
-
-    const [accessToken, setAccessToken] =
-        useState<string | null>(null);
-
+export function AuthProvider({ children }: { children: ReactNode }) {
+    const [user, setUser] = useState<MeResponse | null>(null);
+    const [accessToken, setAccessToken] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    async function login(
-        email: string,
-        password: string
-    ) {
-        const response = await loginApi({
-            email,
-            password,
-        });
-
+    async function login(email: string, password: string) {
+        const response = await loginApi({ email, password });
         setAccessToken(response.accessToken);
 
-        setUser(response.user);
+        // Lấy user info sau khi có access token
+        const me = await getCurrentUser(response.accessToken);
+        setUser(me);
     }
 
     function logout() {
+        try { logoutApi(); } catch {}
         setAccessToken(null);
         setUser(null);
+    }
+
+    function updateToken(token: string) {
+        setAccessToken(token);
     }
 
     useEffect(() => {
         async function restoreSession() {
             try {
-                const refreshResponse =
-                    await refreshAccessToken();
+                // Gọi refresh — browser tự gửi cookie HttpOnly
+                const refreshResponse = await refreshAccessToken();
+                setAccessToken(refreshResponse.accessToken);
 
-                const newAccessToken =
-                    refreshResponse.accessToken;
-
-                setAccessToken(newAccessToken);
-
-                const currentUser =
-                    await getCurrentUser(newAccessToken);
-
-                setUser(currentUser);
+                const me = await getCurrentUser(refreshResponse.accessToken);
+                setUser(me);
             } catch {
                 setAccessToken(null);
                 setUser(null);
@@ -81,7 +61,6 @@ export function AuthProvider({
                 setIsLoading(false);
             }
         }
-
         restoreSession();
     }, []);
 
@@ -94,6 +73,7 @@ export function AuthProvider({
                 isLoading,
                 login,
                 logout,
+                updateToken,
             }}
         >
             {children}
