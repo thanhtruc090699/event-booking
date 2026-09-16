@@ -1,38 +1,22 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { EventCard } from "@/features/events/components/EventCard";
+import { getEvents } from "@/features/events/api/eventsApi";
+import type { EventDto } from "@/features/events/api/eventsApi";
 import Link from "next/link";
 
-const upcomingEvents = [
-    {
-        id: 2,
-        title: "Jazz Night Munich",
-        venue: "Munich Philharmonic",
-        date: "25 Sep",
-        imageUrl: "https://picsum.photos/seed/event-2/480/270",
-    },
-    {
-        id: 3,
-        title: "Electronic Nights Hamburg",
-        venue: "Hamburg Warehouse",
-        date: "02 Oct",
-        imageUrl: "https://picsum.photos/seed/event-3/480/270",
-    },
-    {
-        id: 4,
-        title: "Classical Symphony Vienna",
-        venue: "Vienna State Opera",
-        date: "10 Oct",
-        imageUrl: "https://picsum.photos/seed/event-4/480/270",
-    },
-    {
-        id: 5,
-        title: "Indie Fest Frankfurt",
-        venue: "Riverside Park",
-        date: "18 Oct",
-        imageUrl: "https://picsum.photos/seed/event-5/480/270",
-    },
-];
-
 export function UpcomingEventsSection() {
+    const [events, setEvents] = useState<EventDto[]>([]);
+
+    useEffect(() => {
+        getEvents().then(data => {
+            const now = new Date();
+            const upcoming = data.filter(e => new Date(e.startDate) > now);
+            setEvents(upcoming.slice(0, 5));
+        }).catch(console.error);
+    }, []);
+
     return (
         <section className="mx-auto max-w-6xl px-5 pt-8 md:px-10">
             <div className="mb-4 flex items-baseline justify-between gap-4">
@@ -49,14 +33,15 @@ export function UpcomingEventsSection() {
             </div>
 
             <div className="flex gap-4 overflow-x-auto pb-3">
-                {upcomingEvents.map((event) => (
+                {events.map((event) => (
                     <EventCard
                         key={event.id}
                         id={event.id}
                         title={event.title}
                         venue={event.venue}
-                        date={event.date}
+                        startDate={event.startDate}
                         imageUrl={event.imageUrl}
+                        hot={event.hot}
                     />
                 ))}
             </div>

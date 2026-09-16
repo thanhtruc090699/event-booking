@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/cn";
-import { mockEvents } from "@/features/events/data/mockEvents";
+import { getEvents } from "@/features/events/api/eventsApi";
+import type { EventDto } from "@/features/events/api/eventsApi";
 
 type SearchBoxProps = {
     initialQuery?: string;
@@ -79,12 +80,16 @@ function saveRecentSearch(query: string) {
 export function SearchBox({ initialQuery = "", className }: SearchBoxProps) {
     const router = useRouter();
 
+    const [events, setEvents] = useState<EventDto[]>([]);
     const [query, setQuery] = useState(initialQuery);
     const [isFocused, setIsFocused] = useState(false);
     const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
     useEffect(() => {
         setRecentSearches(getRecentSearches());
+        getEvents()
+            .then(data => setEvents(data))
+            .catch(console.error);
     }, []);
 
     const matchingEvents = useMemo(() => {
@@ -94,7 +99,7 @@ export function SearchBox({ initialQuery = "", className }: SearchBoxProps) {
             return [];
         }
 
-        return mockEvents
+        return events
             .filter((event) => {
                 return (
                     event.title.toLowerCase().includes(value) ||
@@ -104,7 +109,7 @@ export function SearchBox({ initialQuery = "", className }: SearchBoxProps) {
                 );
             })
             .slice(0, 3);
-    }, [query]);
+    }, [query, events]);
 
     const shouldShowDropdown =
         isFocused && (query.trim().length > 0 || recentSearches.length > 0);
@@ -234,7 +239,7 @@ export function SearchBox({ initialQuery = "", className }: SearchBoxProps) {
                                         </h4>
 
                                         <p className="mt-0.5 text-xs text-[var(--muted)]">
-                                            {event.venue} · {event.date}
+                                            {event.venue} · {new Date(event.startDate).toLocaleDateString()}
                                         </p>
                                     </div>
                                 </button>

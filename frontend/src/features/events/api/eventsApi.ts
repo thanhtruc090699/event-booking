@@ -11,6 +11,7 @@ export type EventDto = {
     startingPrice: number;
     startDate: string;
     availableSeats: number;
+    hot: boolean;
 };
 
 export type SeatDto = {

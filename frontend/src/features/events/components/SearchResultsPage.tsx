@@ -1,36 +1,39 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/cn";
 import { EventCard } from "@/features/events/components/EventCard";
 import { SearchBox } from "@/features/events/components/SearchBox";
-import {
-    type EventCategory,
-    mockEvents,
-} from "@/features/events/data/mockEvents";
-
-type CategoryFilter = "All" | EventCategory;
-
-const categories: CategoryFilter[] = [
-    "All",
-    "Concert",
-    "Festival",
-    "Theatre",
-    "Sports",
-];
+import { getEvents } from "@/features/events/api/eventsApi";
+import type { EventDto } from "@/features/events/api/eventsApi";
 
 type SearchResultsPageProps = {
     initialQuery: string;
 };
 
 export function SearchResultsPage({ initialQuery }: SearchResultsPageProps) {
-    const [activeCategory, setActiveCategory] =
-        useState<CategoryFilter>("All");
+    const [events, setEvents] = useState<EventDto[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [activeCategory, setActiveCategory] = useState<string>("All");
 
     const normalizedQuery = initialQuery.trim().toLowerCase();
 
+    useEffect(() => {
+        getEvents()
+            .then(data => {
+                setEvents(data);
+                setLoading(false);
+            })
+            .catch(console.error);
+    }, []);
+
+    const categories = useMemo(() => {
+        const cats = new Set<string>(events.map(e => e.category));
+        return ["All", ...cats];
+    }, [events]);
+
     const results = useMemo(() => {
-        return mockEvents.filter((event) => {
+        return events.filter((event) => {
             const matchesQuery =
                 !normalizedQuery ||
                 event.title.toLowerCase().includes(normalizedQuery) ||
@@ -44,7 +47,7 @@ export function SearchResultsPage({ initialQuery }: SearchResultsPageProps) {
 
             return matchesQuery && matchesCategory;
         });
-    }, [normalizedQuery, activeCategory]);
+    }, [normalizedQuery, activeCategory, events]);
 
     return (
         <main>
@@ -61,7 +64,7 @@ export function SearchResultsPage({ initialQuery }: SearchResultsPageProps) {
                 </h1>
 
                 <p className="mt-1 text-sm text-[var(--muted)]">
-                    {results.length} events found
+                    {loading ? "Loading..." : `${results.length} events found`}
                 </p>
             </section>
 
@@ -96,7 +99,11 @@ export function SearchResultsPage({ initialQuery }: SearchResultsPageProps) {
                 </select>
             </section>
 
-            {results.length > 0 ? (
+            {loading ? (
+                <section className="mx-auto max-w-6xl px-5 py-16 text-center md:px-10">
+                    <p className="text-[var(--muted)]">Loading...</p>
+                </section>
+            ) : results.length > 0 ? (
                 <section className="mx-auto max-w-6xl px-5 pt-6 md:px-10">
                     <div className="grid gap-[18px] sm:grid-cols-2 lg:grid-cols-4">
                         {results.map((event) => (
@@ -105,7 +112,7 @@ export function SearchResultsPage({ initialQuery }: SearchResultsPageProps) {
                                 id={event.id}
                                 title={event.title}
                                 venue={event.venue}
-                                date={event.date}
+                                startDate={event.startDate}
                                 imageUrl={event.imageUrl}
                                 hot={event.hot}
                                 className="min-w-0"

@@ -5,21 +5,32 @@ type EventCardProps = {
     id: number;
     title: string;
     venue: string;
-    date: string;
+    startDate: string;
     imageUrl: string;
     hot?: boolean;
     className?: string;
 };
 
+function formatDate(isoDate: string): string {
+    const date = new Date(isoDate);
+    return date.toLocaleDateString('en-US', { 
+        weekday: 'short', 
+        month: 'short', 
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+    });
+}
+
 export function EventCard({
-                              id,
-                              title,
-                              venue,
-                              date,
-                              imageUrl,
-                              hot = false,
-                              className,
-                          }: EventCardProps) {
+                               id,
+                               title,
+                               venue,
+                               startDate,
+                               imageUrl,
+                               hot = false,
+                               className,
+                           }: EventCardProps) {
     return (
         <Link
             href={`/events/${id}`}
@@ -46,7 +57,7 @@ export function EventCard({
                 </h3>
 
                 <p className="mt-1 text-xs text-[var(--muted)]">
-                    {venue} · {date}
+                    {venue} · {formatDate(startDate)}
                 </p>
             </div>
         </Link>

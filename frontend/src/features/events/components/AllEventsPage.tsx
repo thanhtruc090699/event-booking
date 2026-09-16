@@ -1,35 +1,42 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/cn";
 import { EventCard } from "@/features/events/components/EventCard";
 import { SearchBox } from "@/features/events/components/SearchBox";
-import {
-    type EventCategory,
-    mockEvents,
-} from "@/features/events/data/mockEvents";
+import { getEvents } from "@/features/events/api/eventsApi";
+import type { EventDto } from "@/features/events/api/eventsApi";
 
-type CategoryFilter = "All" | EventCategory;
-
-const categories: CategoryFilter[] = [
-    "All",
-    "Concert",
-    "Festival",
-    "Theatre",
-    "Sports",
-];
+type CategoryFilter = "All" | string;
 
 export function AllEventsPage() {
-    const [activeCategory, setActiveCategory] =
-        useState<CategoryFilter>("All");
+    const [events, setEvents] = useState<EventDto[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [activeCategory, setActiveCategory] = useState<CategoryFilter>("All");
+
+    useEffect(() => {
+        getEvents()
+            .then(data => {
+                setEvents(data);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error("Failed to fetch events:", err);
+                setLoading(false);
+            });
+    }, []);
+
+    const categories = useMemo(() => {
+        const cats = new Set<string>(events.map(e => e.category));
+        return ["All", ...cats];
+    }, [events]);
 
     const filteredEvents = useMemo(() => {
         if (activeCategory === "All") {
-            return mockEvents;
+            return events;
         }
-
-        return mockEvents.filter((event) => event.category === activeCategory);
-    }, [activeCategory]);
+        return events.filter((event) => event.category === activeCategory);
+    }, [activeCategory, events]);
 
     return (
         <main>
@@ -39,7 +46,7 @@ export function AllEventsPage() {
                 </h1>
 
                 <p className="mt-1 text-sm text-[var(--muted)]">
-                    {filteredEvents.length} events currently available
+                    {loading ? "Loading..." : `${filteredEvents.length} events currently available`}
                 </p>
             </section>
 
@@ -72,20 +79,24 @@ export function AllEventsPage() {
             </section>
 
             <section className="mx-auto max-w-6xl px-5 pt-6 md:px-10">
-                <div className="grid gap-[18px] sm:grid-cols-2 lg:grid-cols-4">
-                    {filteredEvents.map((event) => (
-                        <EventCard
-                            key={event.id}
-                            id={event.id}
-                            title={event.title}
-                            venue={event.venue}
-                            date={event.date}
-                            imageUrl={event.imageUrl}
-                            hot={event.hot}
-                            className="min-w-0"
-                        />
-                    ))}
-                </div>
+                {loading ? (
+                    <p className="text-center text-[var(--muted)]">Loading events...</p>
+                ) : (
+                    <div className="grid gap-[18px] sm:grid-cols-2 lg:grid-cols-4">
+                        {filteredEvents.map((event) => (
+                            <EventCard
+                                key={event.id}
+                                id={event.id}
+                                title={event.title}
+                                venue={event.venue}
+                                startDate={event.startDate}
+                                imageUrl={event.imageUrl}
+                                hot={event.hot}
+                                className="min-w-0"
+                            />
+                        ))}
+                    </div>
+                )}
             </section>
 
             <div className="mx-auto flex max-w-6xl justify-center gap-2 px-5 py-8 md:px-10">

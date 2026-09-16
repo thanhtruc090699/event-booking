@@ -1,25 +1,63 @@
-import { Button } from "@/components/ui/Button";
+"use client";
+
+import { useEffect, useState } from "react";
+import { getEventById } from "@/features/events/api/eventsApi";
+import type { EventDto } from "@/features/events/api/eventsApi";
 import { SeatMap } from "@/features/booking/components/SeatMap";
 
 type EventDetailPageProps = {
     eventId: string;
 };
 
-const event = {
-    title: "Rock Concert Berlin",
-    category: "Concert",
-    venue: "Berlin Arena",
-    city: "Berlin",
-    date: "Sunday, 20 September 2026",
-    time: "19:00",
-    description:
-        "A large-scale rock concert bringing together leading European rock bands, recreating the atmosphere of Berlin's legendary 90s music scene with a full lighting setup and a three-hour stage performance.",
-    imageUrl: "https://picsum.photos/seed/event-1/1600/900",
-    startingPrice: "49.99 €",
-    availableSeats: 84,
-};
+function formatDateTime(isoDate: string): { date: string; time: string } {
+    const date = new Date(isoDate);
+    const dateStr = date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+    const timeStr = date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    return { date: dateStr, time: timeStr };
+}
 
 export function EventDetailPage({ eventId }: EventDetailPageProps) {
+    const [event, setEvent] = useState<EventDto | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        getEventById(eventId)
+            .then(data => {
+                setEvent(data);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error("Failed to fetch event:", err);
+                setLoading(false);
+            });
+    }, [eventId]);
+
+    if (loading) {
+        return (
+            <main className="flex min-h-screen items-center justify-center">
+                <p className="text-[var(--muted)]">Loading event...</p>
+            </main>
+        );
+    }
+
+    if (!event) {
+        return (
+            <main className="flex min-h-screen items-center justify-center">
+                <p className="text-[var(--muted)]">Event not found</p>
+            </main>
+        );
+    }
+
+    const { date, time } = formatDateTime(event.startDate);
+
     return (
         <main>
             <section className="relative min-h-[520px] overflow-hidden">
@@ -44,8 +82,8 @@ export function EventDetailPage({ eventId }: EventDetailPageProps) {
 
                         <div className="mt-6 flex flex-wrap gap-5 text-sm text-[var(--muted)]">
                             <span>📍 {event.venue}</span>
-                            <span>🗓 {event.date}</span>
-                            <span>🕖 {event.time}</span>
+                            <span>🗓 {date}</span>
+                            <span>🕖 {time}</span>
                         </div>
 
                         <p className="mt-6 max-w-2xl text-sm leading-7 text-zinc-300 md:text-base">
@@ -63,7 +101,7 @@ export function EventDetailPage({ eventId }: EventDetailPageProps) {
                         </p>
 
                         <p className="mt-2 font-[var(--font-bebas)] text-5xl tracking-wide text-[var(--ink)]">
-                            {event.startingPrice}
+                            {event.startingPrice.toFixed(2)} €
                         </p>
 
                         <p className="mt-3 text-sm font-medium text-[var(--gold)]">
