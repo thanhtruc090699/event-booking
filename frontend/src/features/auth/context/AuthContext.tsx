@@ -3,6 +3,7 @@
 import { createContext, useEffect, useState, type ReactNode } from "react";
 import {
     login as loginApi,
+    socialLogin as socialLoginApi,
     getCurrentUser,
     refreshAccessToken,
     logout as logoutApi,
@@ -15,8 +16,9 @@ interface AuthContextType {
     isAuthenticated: boolean;
     isLoading: boolean;
     login: (email: string, password: string) => Promise<void>;
+    loginWithSocial: (provider: "google", token: string) => Promise<void>;
     logout: () => void;
-    updateToken: (token: string) => void;  // để apiClient callback cập nhật
+    updateToken: (token: string) => void;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,13 +32,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const response = await loginApi({ email, password });
         setAccessToken(response.accessToken);
 
-        // Lấy user info sau khi có access token
+        // Get user info after having access token
         const me = await getCurrentUser(response.accessToken);
         setUser(me);
     }
 
-    function logout() {
-        try { logoutApi(); } catch {}
+    async function loginWithSocial(provider: "google", token: string) {
+        const response = await socialLoginApi({ provider, token });
+        setAccessToken(response.accessToken);
+
+        const me = await getCurrentUser(response.accessToken);
+        setUser(me);
+    }
+
+    async function logout() {
+        try { await logoutApi(); } catch {}
         setAccessToken(null);
         setUser(null);
     }
@@ -48,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         async function restoreSession() {
             try {
-                // Gọi refresh — browser tự gửi cookie HttpOnly
+                // Call refresh — browser automatically sends HttpOnly cookie
                 const refreshResponse = await refreshAccessToken();
                 setAccessToken(refreshResponse.accessToken);
 
@@ -72,6 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 isAuthenticated: user !== null,
                 isLoading,
                 login,
+                loginWithSocial,
                 logout,
                 updateToken,
             }}

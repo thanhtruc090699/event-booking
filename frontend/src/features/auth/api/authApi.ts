@@ -29,6 +29,11 @@ export type RefreshResponse = {
     accessToken: string;
 };
 
+export type SocialLoginRequest = {
+    provider: "google";
+    token: string;
+};
+
 export type RegisterResponse = {
     customerId: number;
     email: string;
@@ -63,6 +68,14 @@ export function logout() {
     return apiClient<void>("/api/auth/logout", {
         method: "POST",
         credentials: "include", // browser will send cookie -> backend will delete it
+    });
+}
+
+export function socialLogin(request: SocialLoginRequest) {
+    return apiClient<AuthResponse>("/api/auth/social", {
+        method: "POST",
+        body: JSON.stringify(request),
+        credentials: "include", // Browser will save the HttpOnly refresh token cookie set by backend
     });
 }
 

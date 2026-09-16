@@ -35,12 +35,12 @@ export async function apiClient<T>(
 
     let response = await doFetch(token);
 
-    // Auto-refresh: nếu nhận 401 VÀ có token VÀ không phải request auth
+    // Auto-refresh: if 401 AND has token AND not an auth request
     if (response.status === 401 && token && !endpoint.includes("/api/auth/")) {
         if (!isRefreshing) {
             isRefreshing = true;
             try {
-                // Gọi refresh — browser tự gửi cookie
+                // Call refresh — browser automatically sends HttpOnly cookie
                 const refreshResponse = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
                     method: "POST",
                     credentials: "include",
@@ -55,7 +55,7 @@ export async function apiClient<T>(
                 isRefreshing = false;
             }
         } else {
-            // Đang refresh → chờ token mới rồi retry
+            // Refreshing in progress → wait for new token then retry
             response = await new Promise<Response>((resolve) => {
                 refreshSubscribers.push(async (newToken) => {
                     resolve(await doFetch(newToken));
@@ -69,5 +69,11 @@ export async function apiClient<T>(
     }
 
     if (response.status === 204) return undefined as T;
-    return response.json() as Promise<T>;
+
+    const text = await response.text();
+    if (!text) {
+        return undefined as T;
+    }
+
+    return JSON.parse(text) as T;
 }
