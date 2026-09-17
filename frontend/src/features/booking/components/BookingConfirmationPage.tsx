@@ -1,9 +1,64 @@
+"use client";
+
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { PriceSummary } from "@/features/booking/components/PriceSummary";
 import { SeatLine } from "@/features/booking/components/SeatLine";
-import { mockBooking } from "@/features/booking/data/mockBooking";
+import { getBooking } from "@/features/booking/api/bookingApi";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import type { BookingDetailsDto } from "@/features/booking/api/bookingApi";
 
 export function BookingConfirmationPage() {
+    const searchParams = useSearchParams();
+    const bookingId = searchParams.get("bookingId");
+    const { accessToken } = useAuth();
+    const [booking, setBooking] = useState<BookingDetailsDto | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (!bookingId || !accessToken) {
+            setLoading(false);
+            return;
+        }
+
+        getBooking(bookingId, accessToken)
+            .then(data => {
+                setBooking(data);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error("Failed to fetch booking:", err);
+                setLoading(false);
+            });
+    }, [bookingId, accessToken]);
+
+    if (loading) {
+        return (
+            <main className="mx-auto max-w-[480px] px-6 pb-16 pt-10">
+                <div className="flex items-center justify-center min-h-[400px]">
+                    <p className="text-[var(--muted)]">Loading booking...</p>
+                </div>
+            </main>
+        );
+    }
+
+    if (!booking) {
+        return (
+            <main className="mx-auto max-w-[480px] px-6 pb-16 pt-10">
+                <div className="text-center">
+                    <p className="text-[var(--muted)]">Booking not found</p>
+                    <Link href="/" className="mt-4 inline-block text-[var(--gold)]">
+                        Browse Events →
+                    </Link>
+                </div>
+            </main>
+        );
+    }
+
+    const eventDate = new Date(booking.reservation.event.startDate);
+    const eventMeta = `${eventDate.toLocaleDateString()} · ${eventDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} · ${booking.reservation.event.venue}`;
+
     return (
         <main className="mx-auto max-w-[480px] px-6 pb-16 pt-10">
             <div className="mb-6 text-center">
@@ -22,8 +77,8 @@ export function BookingConfirmationPage() {
 
             <div className="relative mb-[18px] h-[150px] overflow-hidden rounded-[14px]">
                 <img
-                    src={mockBooking.event.imageUrl}
-                    alt={mockBooking.event.title}
+                    src={booking.reservation.event.imageUrl}
+                    alt={booking.reservation.event.title}
                     className="h-full w-full object-cover"
                 />
 
@@ -31,11 +86,11 @@ export function BookingConfirmationPage() {
 
                 <div className="absolute bottom-3 left-3.5">
                     <h2 className="font-[var(--font-bebas)] text-[22px] tracking-wide text-[var(--ink)]">
-                        {mockBooking.event.title}
+                        {booking.reservation.event.title}
                     </h2>
 
                     <p className="text-xs text-[var(--muted)]">
-                        {mockBooking.event.date} · {mockBooking.event.time} · {mockBooking.event.venue}
+                        {eventMeta}
                     </p>
                 </div>
             </div>
@@ -46,7 +101,7 @@ export function BookingConfirmationPage() {
                 </div>
 
                 <div className="mt-1 font-[var(--font-mono)] text-lg text-[var(--gold)]">
-                    {mockBooking.bookingReference}
+                    {booking.bookingReference}
                 </div>
             </div>
 
@@ -55,23 +110,24 @@ export function BookingConfirmationPage() {
                     Your tickets
                 </h2>
 
-                {mockBooking.selectedSeats.map((seat) => (
+                {booking.reservation.selectedSeats.map((seat) => (
                     <SeatLine
-                        key={`${seat.section}-${seat.row}-${seat.seat}`}
+                        key={seat.id.toString()}
                         section={seat.section}
-                        row={seat.row}
-                        seat={seat.seat}
+                        row={seat.rowLabel}
+                        seat={seat.seatNumber}
+                        price={seat.price}
                     />
                 ))}
             </section>
 
             <section className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-[18px]">
-                <PriceSummary />
+                <PriceSummary seats={booking.reservation.selectedSeats} />
             </section>
 
             <div className="mt-5 flex flex-col gap-2.5">
                 <Link
-                    href={`/tickets/${mockBooking.ticketCode}`}
+                    href={`/tickets/${booking.id}`}
                     className="block rounded-lg bg-[var(--crimson)] px-5 py-3.5 text-center text-sm font-semibold text-[var(--ink)] transition hover:bg-[var(--crimson-dim)]"
                 >
                     View Tickets

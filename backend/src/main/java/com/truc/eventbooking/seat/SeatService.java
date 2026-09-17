@@ -21,6 +21,7 @@ public class SeatService {
                 "SEAT_NOT_FOUND","Seat not found"));
         return toEventSeatResponse(seat);
     }
+    
     private EventSeatResponse toEventSeatResponse(Seat seat) {
         return new EventSeatResponse(
                 seat.getSeatId(),
@@ -30,6 +31,12 @@ public class SeatService {
                 seat.getSeatPrice(),
                 seat.getSeatStatus()
         );
+    }
+    
+    public Seat getSeatEntityById(Long seatId) {
+        Seat seat = seatRepository.findById(seatId).orElseThrow(()->new NotFoundException(
+                "SEAT_NOT_FOUND","Seat not found"));
+        return seat;
     }
     public Seat releaseSeat(Long seatId) {
        Seat seat = seatRepository.findById(seatId).orElseThrow(()-> new NotFoundException("SEAT_NOT_FOUND", "Seat not found"));

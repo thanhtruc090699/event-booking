@@ -1,19 +1,19 @@
 package com.truc.eventbooking.reservation;
 
 import com.truc.eventbooking.auth.AuthRepository;
-import com.truc.eventbooking.auth.AuthService;
 import com.truc.eventbooking.auth.Customer;
 import com.truc.eventbooking.common.exception.BusinessConflictException;
 import com.truc.eventbooking.common.exception.NotFoundException;
 import com.truc.eventbooking.seat.Seat;
-import com.truc.eventbooking.seat.SeatRepository;
 import com.truc.eventbooking.seat.SeatService;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import com.truc.eventbooking.reservation.dto.CreateReservationRequest;
 import com.truc.eventbooking.reservation.dto.ReservationResponse;
+import com.truc.eventbooking.reservation.dto.ReservationSummaryResponse;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -21,51 +21,69 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final SeatService seatService;
     private final AuthRepository authRepository;
+    
     public ReservationService(ReservationRepository reservationRepository,
-                              SeatRepository seatRepository, SeatService seatService,
+                              SeatService seatService,
                               AuthRepository  authRepository) {
         this.reservationRepository = reservationRepository;
         this.seatService = seatService;
         this.authRepository = authRepository;
     }
+    
     public List<ReservationResponse> getAllReservations() {
         return reservationRepository.findAll().stream().map(this::toReservationResponse).toList();
     }
+    
     public ReservationResponse getReservationById(Long reservationId) {
         return reservationRepository.findById(reservationId).map(this::toReservationResponse).orElseThrow(()-> new RuntimeException("Reservation not found"));
-
-    }
-    public ReservationResponse getReservationBySeatId(Long seatId) {
-        return reservationRepository.findBySeat_SeatId(seatId).map(this::toReservationResponse).orElseThrow(()-> new RuntimeException("Reservation not found"));
     }
 
     @Transactional
-    public ReservationResponse createReservation(CreateReservationRequest createReservationRequest, Long customerId) {
-        Long seatId = createReservationRequest.eventSeatId();
-
-        Seat seat = seatService.markAsReserved(seatId);
-
+    public ReservationSummaryResponse createReservation(CreateReservationRequest request, Long customerId) {
         Customer customer = authRepository.findById(customerId).orElseThrow(
-                () -> new NotFoundException("CUSTOMER_NOT_FOUND","CUSTOMER_NOT_FOUND")
+                () -> new NotFoundException("CUSTOMER_NOT_FOUND", "Customer not found")
         );
 
-        Reservation reservation = new Reservation(seat,customer);
+        Reservation reservation = new Reservation(customer);
+
+        // Mark each seat as reserved and add to reservation
+        for (Long seatId : request.seatIds()) {
+            Seat seat = seatService.markAsReserved(seatId);
+            reservation.addSeat(seat);
+        }
 
         Reservation savedReservation = reservationRepository.save(reservation);
-        return toReservationResponse(savedReservation);
+        return toReservationSummaryResponse(savedReservation);
     }
+    
+    @Transactional
+    public ReservationSummaryResponse getReservationSummaryById(Long reservationId, Long customerId) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+            .orElseThrow(() -> new NotFoundException("RESERVATION_NOT_FOUND", "Reservation not found"));
+        
+        // Check ownership - only allow customer to view their own reservation
+        if (!reservation.getCustomer().getCustomerId().equals(customerId)) {
+            throw new BusinessConflictException("NOT_OWNER", "You don't own this reservation");
+        }
+        
+        return toReservationSummaryResponse(reservation);
+    }
+    
     public Reservation markAsCancelled(Long reservationId) {
         Reservation reservation = reservationRepository.findById(reservationId).orElseThrow(() -> new NotFoundException(
                 "RESERVATION_NOT_FOUND", "Reservation not found"
         ));
         if(reservation.getStatus()!=ReservationStatus.ACTIVE) throw new BusinessConflictException("RESERVATION_NOT_ACTIVE","Reservation not active");
 
-
+        // Release all seats
+        for (ReservationSeat rs : reservation.getReservationSeats()) {
+            seatService.releaseSeat(rs.getSeat().getSeatId());
+        }
+        
         reservation.setStatus(ReservationStatus.CANCELLED);
-        seatService.releaseSeat(reservation.getSeat().getSeatId());
         return reservation;
-
     }
+    
     public Reservation markAsConfirmed(Long reservationId){
         Reservation reservation = reservationRepository.findById(reservationId).orElseThrow(() -> new NotFoundException(
                 "RESERVATION_NOT_FOUND", "Reservation not found"
@@ -77,11 +95,15 @@ public class ReservationService {
             throw new BusinessConflictException("RESERVATION_EXPIRED","Reservation is expired");
         }
 
+        // Mark all seats as booked
+        for (ReservationSeat rs : reservation.getReservationSeats()) {
+            seatService.markAsBooked(rs.getSeat().getSeatId());
+        }
+        
         reservation.setStatus(ReservationStatus.CONFIRMED);
-        seatService.markAsBooked(reservation.getSeat().getSeatId());
-
         return reservation;
     }
+    
     public Reservation markAsExpired(Long reservationId) {
         Reservation reservation = reservationRepository.findById(reservationId).orElseThrow(()-> new NotFoundException(
                 "RESERVATION_NOT_FOUND","Reservation not found"
@@ -90,22 +112,64 @@ public class ReservationService {
         if (!reservation.getExpiryDate().isBefore(OffsetDateTime.now())) {
             throw new BusinessConflictException("RESERVATION_NOT_EXPIRED", "Reservation is not expired");
         }
+        
+        // Release all seats
+        for (ReservationSeat rs : reservation.getReservationSeats()) {
+            seatService.releaseSeat(rs.getSeat().getSeatId());
+        }
+        
         reservation.setStatus(ReservationStatus.EXPIRED);
-        seatService.releaseSeat(reservation.getSeat().getSeatId());
         return reservation;
     }
+    
     private ReservationResponse toReservationResponse(Reservation reservation) {
+        // For backward compatibility - return first seat only
+        if (reservation.getReservationSeats().isEmpty()) {
+            return null;
+        }
         return new ReservationResponse(
                 reservation.getReservationId(),
-                reservation.getSeat().getSeatId(),
+                reservation.getReservationSeats().get(0).getSeat().getSeatId(),
                 reservation.getCustomer().getCustomerId(),
                 reservation.getStatus(),
                 reservation.getExpiryDate()
         );
     }
-    private CreateReservationRequest toCreateReservationRequest(Reservation reservation) {
-        return new CreateReservationRequest(
-                reservation.getSeat().getSeatId()
+    
+    private ReservationSummaryResponse toReservationSummaryResponse(Reservation reservation) {
+        // Build EventInfo from first seat (all seats belong to same event)
+        ReservationSeat firstSeat = reservation.getReservationSeats().get(0);
+        Seat seat = firstSeat.getSeat();
+        
+        ReservationSummaryResponse.EventInfo eventInfo = new ReservationSummaryResponse.EventInfo(
+            seat.getEvent().getId(),
+            seat.getEvent().getName(),
+            seat.getEvent().getImageUrl(),
+            seat.getEvent().getVenueName(),
+            seat.getEvent().getCity(),
+            seat.getEvent().getStartTime()
+        );
+        
+        // Build list of SeatInfo
+        List<ReservationSummaryResponse.SeatInfo> seatInfos = new ArrayList<>();
+        for (ReservationSeat rs : reservation.getReservationSeats()) {
+            Seat s = rs.getSeat();
+            seatInfos.add(new ReservationSummaryResponse.SeatInfo(
+                s.getSeatId(),
+                s.getSection(),
+                s.getRowLabel(),
+                s.getSeatNumber(),
+                s.getSeatPrice()
+            ));
+        }
+        
+        return new ReservationSummaryResponse(
+            reservation.getReservationId(),
+            seat.getEvent().getId(),
+            reservation.getStatus(),
+            reservation.getExpiryDate(),
+            eventInfo,
+            seatInfos
         );
     }
 }

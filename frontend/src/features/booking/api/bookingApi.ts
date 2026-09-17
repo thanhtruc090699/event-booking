@@ -56,7 +56,7 @@ export type BookingDetailsDto = {
     totalAmount: number;
     createdAt: string;
     paymentMethod: PaymentMethod;
-    Reservation: ReservationSummaryDto;
+    reservation: ReservationSummaryDto;
 };
 
 export function createReservation(payload: CreateReservationRequest, token: string) {

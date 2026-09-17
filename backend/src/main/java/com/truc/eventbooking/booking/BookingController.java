@@ -6,6 +6,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 import com.truc.eventbooking.booking.dto.BookingResponse;
+import com.truc.eventbooking.booking.dto.BookingDetailsDto;
 import com.truc.eventbooking.booking.dto.CreateBookingRequest;
 
 import java.util.List;
@@ -20,7 +21,7 @@ public class BookingController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public BookingResponse createBooking(@Valid @RequestBody CreateBookingRequest request,
+    public BookingDetailsDto createBooking(@Valid @RequestBody CreateBookingRequest request,
                                          @AuthenticationPrincipal CustomerUserPrincipal principal) {
         return bookingService.createBooking(request,principal.getCustomerId());
     }

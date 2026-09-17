@@ -1,18 +1,54 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/cn";
 
 type TimerBannerProps = {
     label: string;
-    time: string;
+    time?: string;  // For backward compatibility
+    expiresAt?: string;  // ISO date string
     note?: string;
     danger?: boolean;
 };
 
 export function TimerBanner({
-                                label,
-                                time,
-                                note,
-                                danger = false,
-                            }: TimerBannerProps) {
+    label,
+    time,
+    expiresAt,
+    note,
+    danger = false,
+}: TimerBannerProps) {
+    const [timeLeft, setTimeLeft] = useState<string>("00:00");
+    
+    useEffect(() => {
+        if (!expiresAt) {
+            setTimeLeft(time || "00:00");
+            return;
+        }
+        
+        function updateTimer() {
+            const expiryTime = new Date(expiresAt!).getTime();
+            const now = Date.now();
+            const diff = expiryTime - now;
+            
+            if (diff <= 0) {
+                setTimeLeft("00:00");
+                return;
+            }
+            
+            const minutes = Math.floor(diff / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+            setTimeLeft(
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+            );
+        }
+        
+        updateTimer();
+        const interval = setInterval(updateTimer, 1000);
+        
+        return () => clearInterval(interval);
+    }, [expiresAt]);
+    
     return (
         <div
             className={cn(
@@ -32,7 +68,7 @@ export function TimerBanner({
                     danger ? "text-[var(--crimson)]" : "text-[var(--gold)]"
                 )}
             >
-                {time}
+                {timeLeft}
             </div>
 
             {note && (

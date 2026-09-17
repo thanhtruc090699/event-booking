@@ -5,6 +5,8 @@ import com.truc.eventbooking.seat.Seat;
 import jakarta.persistence.*;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name="reservations")
@@ -15,9 +17,8 @@ public class Reservation {
     @Column(name = "reservation_id")
     private Long reservationId;
 
-    @OneToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name="seat_id",nullable = false,unique = true)
-    private Seat seat;
+    @OneToMany(mappedBy = "reservation", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private List<ReservationSeat> reservationSeats = new ArrayList<>();
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id",nullable = false)
@@ -35,19 +36,23 @@ public class Reservation {
 
     protected Reservation(){}
 
-    public Reservation(Seat seat, Customer customer) {
-        this.seat = seat;
+    public Reservation(Customer customer) {
         this.customer = customer;
         this.status = ReservationStatus.ACTIVE;
-        this.expiryDate = OffsetDateTime.now().plusMinutes(5);
+        this.expiryDate = OffsetDateTime.now().plusMinutes(10);
         this.reservedAt = OffsetDateTime.now();
+    }
+
+    public void addSeat(Seat seat) {
+        ReservationSeat reservationSeat = new ReservationSeat(this, seat);
+        reservationSeats.add(reservationSeat);
     }
 
     public Long getReservationId() {
         return reservationId;
     }
-    public Seat getSeat() {
-        return seat;
+    public List<ReservationSeat> getReservationSeats() {
+        return reservationSeats;
     }
     public Customer getCustomer() {
         return customer;

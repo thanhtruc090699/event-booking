@@ -1,11 +1,17 @@
 package com.truc.eventbooking.event.dto;
-import java.time.OffsetDateTime;
 
-public record EventDetailResponse (
+import java.math.BigDecimal;
+
+public record EventDetailResponse(
         Long id,
-        String name,
+        String title,
         String description,
-        String venueName,
-        OffsetDateTime startTime
-){
+        String venue,
+        String city,
+        String imageUrl,
+        String category,
+        String startDate,
+        BigDecimal startingPrice,
+        int availableSeats
+) {
 }

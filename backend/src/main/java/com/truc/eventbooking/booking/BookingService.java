@@ -12,9 +12,10 @@ import com.truc.eventbooking.seat.SeatService;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import com.truc.eventbooking.booking.dto.BookingResponse;
+import com.truc.eventbooking.booking.dto.BookingDetailsDto;
 import com.truc.eventbooking.booking.dto.CreateBookingRequest;
 
-import java.awt.*;
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -37,7 +38,7 @@ public class BookingService {
     }
 
     @Transactional
-    public BookingResponse createBooking(CreateBookingRequest request, Long customerId) {
+    public BookingDetailsDto createBooking(CreateBookingRequest request, Long customerId) {
         Long reservationId = request.reservationId();
 
         Reservation reservation = reservationRepository.findById(reservationId).orElseThrow(()-> new BusinessConflictException("RESERVATION_NOT_FOUND","Reservation not found"));
@@ -56,7 +57,7 @@ public class BookingService {
         Booking booking = new Booking(reservation,ticketCode);
         Booking savedBooking = bookingRepository.save(booking);
 
-        return toBookingResponse(savedBooking);
+        return toBookingDetailsDto(savedBooking, request.paymentMethod());
     }
 
     public List<BookingResponse> getAllBookings() {
@@ -70,7 +71,8 @@ public class BookingService {
 
     private CreateBookingRequest toCreateBookingRequest(Booking booking) {
         return new CreateBookingRequest(
-                booking.getReservation().getReservationId()
+                booking.getReservation().getReservationId(),
+                null
         );
     }
     private BookingResponse toBookingResponse(Booking booking) {
@@ -79,6 +81,22 @@ public class BookingService {
                 booking.getReservation().getReservationId(),
                 booking.getStatus(),
                 booking.getTicketCode()
+        );
+    }
+    
+    private BookingDetailsDto toBookingDetailsDto(Booking booking, String paymentMethod) {
+        BigDecimal totalAmount = booking.getReservation().getReservationSeats().stream()
+            .map(rs -> rs.getSeat().getSeatPrice())
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        return new BookingDetailsDto(
+            booking.getBookingID(),
+            booking.getTicketCode(),
+            booking.getStatus(),
+            totalAmount,
+            booking.getCreatedAt(),
+            paymentMethod,
+            reservationService.getReservationSummaryById(booking.getReservation().getReservationId(), booking.getReservation().getCustomer().getCustomerId())
         );
     }
 

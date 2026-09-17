@@ -1,6 +1,7 @@
 package com.truc.eventbooking.reservation;
 
 import com.truc.eventbooking.reservation.dto.ReservationResponse;
+import com.truc.eventbooking.reservation.dto.ReservationSummaryResponse;
 import com.truc.eventbooking.reservation.dto.CreateReservationRequest;
 import com.truc.eventbooking.security.CustomerUserPrincipal;
 import jakarta.validation.Valid;
@@ -20,21 +21,19 @@ public class ReservationController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ReservationResponse createReservation(@Valid @RequestBody CreateReservationRequest request,
+    public ReservationSummaryResponse createReservation(@Valid @RequestBody CreateReservationRequest request,
                                                  @AuthenticationPrincipal CustomerUserPrincipal principal){
         return reservationService.createReservation(request, principal.getCustomerId());
     }
 
     @GetMapping("/{reservationId}")
-    public ReservationResponse getReservationbyReservationId(@PathVariable Long reservationId){
-        return reservationService.getReservationById(reservationId);
+    public ReservationSummaryResponse getReservation(@PathVariable Long reservationId,
+                                                      @AuthenticationPrincipal CustomerUserPrincipal principal){
+        return reservationService.getReservationSummaryById(reservationId, principal.getCustomerId());
     }
 
     @GetMapping
     public List<ReservationResponse> getAllReservations(){
         return reservationService.getAllReservations();
     }
-
-
-
 }

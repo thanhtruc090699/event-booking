@@ -5,10 +5,10 @@ import com.truc.eventbooking.seat.SeatStatus;
 import java.math.BigDecimal;
 
 public record EventSeatResponse (
-        Long seatId,
+        Long id,
         String section,
         String rowLabel,
         String seatNumber,
-        BigDecimal seatPrice,
-        SeatStatus seatStatus){
+        BigDecimal price,
+        SeatStatus status){
 }

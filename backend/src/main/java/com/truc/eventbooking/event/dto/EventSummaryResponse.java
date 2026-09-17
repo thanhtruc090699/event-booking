@@ -4,8 +4,12 @@ import java.time.OffsetDateTime;
 
 public record EventSummaryResponse(
         Long id,
-        String name,
-        String venueName,
-        OffsetDateTime startTime
+        String title,
+        String venue,
+        String city,
+        String startDate,
+        String imageUrl,
+        String category,
+        boolean hot
 ) {
 }

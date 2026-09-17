@@ -15,7 +15,7 @@ export type EventDto = {
 };
 
 export type SeatDto = {
-    id: number;
+    seatId: number;
     section: string;
     rowLabel: string;
     seatNumber: string;

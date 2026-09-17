@@ -1,26 +1,42 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { PaymentOption } from "@/features/booking/components/PaymentOption";
 import { TimerBanner } from "@/features/booking/components/TimerBanner";
-import {
-    formatEuro,
-    getOrderTotal,
-} from "@/features/booking/data/mockBooking";
+import { createBooking } from "@/features/booking/api/bookingApi";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { formatEuro } from "@/features/booking/data/mockBooking";
 
 export function PaymentPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const reservationId = searchParams.get("reservationId");
+    const { accessToken } = useAuth();
     const [isProcessing, setIsProcessing] = useState(false);
-    const orderTotal = getOrderTotal();
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<"CREDIT_CARD" | "PAYPAL">("CREDIT_CARD");
+    
+    const orderTotal = 75;
 
-    function handlePayment() {
+    async function handlePayment() {
+        if (!reservationId || !accessToken) return;
+        
         setIsProcessing(true);
 
-        window.setTimeout(() => {
-            router.push("/booking/confirmation");
-        }, 900);
+        try {
+            const response = await createBooking({
+                reservationId: parseInt(reservationId),
+                paymentMethod: selectedPaymentMethod,
+            }, accessToken);
+            
+            router.push(`/booking/confirmation?bookingId=${response.id}`);
+        } catch (error) {
+            console.error("Payment failed:", error);
+            alert("Payment failed. Please try again.");
+        } finally {
+            setIsProcessing(false);
+        }
     }
 
     return (
@@ -38,7 +54,7 @@ export function PaymentPage() {
 
             <TimerBanner
                 label="Reservation expires in"
-                time="06:58"
+                expiresAt={new Date(Date.now() + 10 * 60 * 1000).toISOString()}
             />
 
             <section className="mb-[18px] rounded-xl border border-[var(--border)] bg-[var(--surface)] p-[18px]">
@@ -68,7 +84,44 @@ export function PaymentPage() {
                     </Link>
                 </div>
 
-                <PaymentOption label="Credit / Debit Card" selected />
+                <div className="space-y-2">
+                    <button
+                        type="button"
+                        onClick={() => setSelectedPaymentMethod("CREDIT_CARD")}
+                        className={`w-full flex items-center gap-3 p-3 rounded-lg border ${
+                            selectedPaymentMethod === "CREDIT_CARD"
+                                ? "border-[var(--gold)] bg-[var(--gold)]/10"
+                                : "border-[var(--border)]"
+                        }`}
+                    >
+                        <input
+                            type="radio"
+                            name="payment"
+                            checked={selectedPaymentMethod === "CREDIT_CARD"}
+                            onChange={() => setSelectedPaymentMethod("CREDIT_CARD")}
+                            className="accent-[var(--crimson)]"
+                        />
+                        <span className="text-sm font-medium text-[var(--ink)]">Credit / Debit Card</span>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setSelectedPaymentMethod("PAYPAL")}
+                        className={`w-full flex items-center gap-3 p-3 rounded-lg border ${
+                            selectedPaymentMethod === "PAYPAL"
+                                ? "border-[var(--gold)] bg-[var(--gold)]/10"
+                                : "border-[var(--border)]"
+                        }`}
+                    >
+                        <input
+                            type="radio"
+                            name="payment"
+                            checked={selectedPaymentMethod === "PAYPAL"}
+                            onChange={() => setSelectedPaymentMethod("PAYPAL")}
+                            className="accent-[var(--crimson)]"
+                        />
+                        <span className="text-sm font-medium text-[var(--ink)]">PayPal</span>
+                    </button>
+                </div>
             </section>
 
             <section className="mb-[18px] rounded-xl border border-[var(--border)] bg-[var(--surface)] p-[18px]">

@@ -1,18 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 import { useRouter } from "next/navigation";
+import { getEventSeats } from "@/features/events/api/eventsApi";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { createReservation } from "@/features/booking/api/bookingApi";
 
 type SeatStatus = "available" | "selected" | "held" | "booked";
-
 
 type Seat = {
     id: string;
     row: number;
     number: number;
     baseStatus: Exclude<SeatStatus, "selected">;
+    price: number;
 };
 
 type SeatMapProps = {
@@ -21,35 +24,6 @@ type SeatMapProps = {
 
 const rows = 4;
 const seatsPerRow = 8;
-
-function createSeats(): Seat[] {
-    const seats: Seat[] = [];
-
-    for (let row = 1; row <= rows; row++) {
-        for (let number = 1; number <= seatsPerRow; number++) {
-            let baseStatus: Seat["baseStatus"] = "available";
-
-            if (number === 5) {
-                baseStatus = "held";
-            }
-
-            if (number === 6) {
-                baseStatus = "booked";
-            }
-
-            seats.push({
-                id: `A-${row}-${number}`,
-                row,
-                number,
-                baseStatus,
-            });
-        }
-    }
-
-    return seats;
-}
-
-const seats = createSeats();
 
 function getSeatClass(status: SeatStatus) {
     return cn(
@@ -81,15 +55,57 @@ function LegendItem({
 }
 
 export function SeatMap({ eventId }: SeatMapProps) {
-
     const router = useRouter();
+    const { accessToken, isAuthenticated } = useAuth();
+    const [seats, setSeats] = useState<Seat[]>([]);
+    const [loading, setLoading] = useState(true);
     const [selectedSeatIds, setSelectedSeatIds] = useState<string[]>([]);
+    const [creatingReservation, setCreatingReservation] = useState(false);
+
+    if (loading) {
+        return (
+            <section className="mx-auto max-w-6xl px-5 py-12 md:px-10">
+                <div className="flex items-center justify-center min-h-[400px]">
+                    <p className="text-[var(--muted)]">Loading seats...</p>
+                </div>
+            </section>
+        );
+    }
+
+    useEffect(() => {
+        async function fetchSeats() {
+            try {
+                const data = await getEventSeats(eventId);
+                const convertedSeats = data.map((seat) => ({
+                    id: seat.seatId.toString(),
+                    row: parseInt(seat.rowLabel),
+                    number: parseInt(seat.seatNumber),
+                    baseStatus: convertSeatStatus(seat.status),
+                    price: seat.price,
+                }));
+                setSeats(convertedSeats);
+            } catch (error) {
+                console.error("Failed to fetch seats:", error);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchSeats();
+    }, [eventId]);
+
+    function convertSeatStatus(status: "AVAILABLE" | "RESERVED" | "BOOKED"): "available" | "held" | "booked" {
+        switch (status) {
+            case "AVAILABLE": return "available";
+            case "RESERVED": return "held";
+            case "BOOKED": return "booked";
+            default: return "available";
+        }
+    }
 
     function getStatus(seat: Seat): SeatStatus {
         if (selectedSeatIds.includes(seat.id)) {
             return "selected";
         }
-
         return seat.baseStatus;
     }
 
@@ -105,22 +121,33 @@ export function SeatMap({ eventId }: SeatMapProps) {
         );
     }
 
-    function continueToBooking() {
+    async function continueToBooking() {
         if (selectedSeatIds.length === 0) {
             return;
         }
 
-        router.push("/booking/checkout");
+        if (!isAuthenticated) {
+            router.push(`/login?redirect=/events/${eventId}`);
+            return;
+        }
 
-        console.log("Continue booking", {
-            eventId,
-            selectedSeatIds,
-        });
+        try {
+            setCreatingReservation(true);
+            
+            const payload = {
+                eventId: parseInt(eventId),
+                seatIds: selectedSeatIds.map(id => parseInt(id)),
+            };
 
-        // Later:
-        // 1. POST /api/reservations
-        // 2. backend holds selected seats
-        // 3. redirect to booking/checkout page
+            const response = await createReservation(payload, accessToken!);
+            
+            router.push(`/booking/checkout?reservationId=${response.id}`);
+        } catch (error) {
+            console.error("Failed to create reservation:", error);
+            alert("Failed to reserve seats. Please try again.");
+        } finally {
+            setCreatingReservation(false);
+        }
     }
 
     return (
@@ -193,11 +220,11 @@ export function SeatMap({ eventId }: SeatMapProps) {
 
                     <Button
                         type="button"
-                        disabled={selectedSeatIds.length === 0}
+                        disabled={selectedSeatIds.length === 0 || creatingReservation}
                         onClick={continueToBooking}
                         className="w-full md:w-auto"
                     >
-                        Select Seats
+                        {creatingReservation ? "Reserving..." : "Continue to Checkout"}
                     </Button>
                 </div>
             </div>
