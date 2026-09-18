@@ -15,11 +15,7 @@ const accountLinks = [
     { label: "Booking Help", href: "/help" },
 ];
 
-const organizerLinks = [
-    { label: "Create Event", href: "/organizer/events/new" },
-    { label: "My Events", href: "/organizer/events" },
-    { label: "Organizer Guide", href: "/organizer/guide" },
-];
+
 
 const legalLinks = [
     { label: "Terms", href: "/terms" },
@@ -68,8 +64,8 @@ function FooterColumn({
 
 export function Footer() {
     return (
-        <footer className="mt-10 border-t border-[var(--border)]">
-            <div className="mx-auto grid max-w-[1200px] gap-8 px-5 py-10 md:px-10 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1.2fr]">
+        <footer className="mt-10 border-t border-[var(--border)] bg-[var(--surface)]">
+            <div className="mx-auto grid max-w-[1200px] gap-8 px-5 py-10 md:px-10 lg:grid-cols-[1.3fr_1fr_1fr_1fr_1fr]">
                 <div>
                     <Link
                         href="/"
@@ -119,64 +115,48 @@ export function Footer() {
 
                 <FooterColumn title="Account" links={accountLinks} />
 
-                <FooterColumn title="Organizer" links={organizerLinks} />
+                <div>
+                    <h4 className="mb-3.5 text-xs font-bold uppercase tracking-[0.08em] text-[var(--muted)]">
+                        Support
+                    </h4>
+
+                    <FooterLink href="/help">Help Center</FooterLink>
+                    <FooterLink href="/contact">Contact Us</FooterLink>
+                    <FooterLink href="/faq">FAQ</FooterLink>
+                </div>
 
                 <div>
                     <h4 className="mb-3.5 text-xs font-bold uppercase tracking-[0.08em] text-[var(--muted)]">
-                        New Events
+                        Legal
                     </h4>
 
-                    <p className="mb-3 text-sm leading-6 text-[var(--muted)]">
-                        Subscribe to get updates about upcoming events near you.
-                    </p>
-
-                    <form className="flex gap-2">
-                        <input
-                            type="email"
-                            placeholder="Your email"
-                            className="min-w-0 flex-1 rounded-lg border border-[var(--border)] bg-[var(--void)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none placeholder:text-[var(--muted)] focus:border-[var(--gold)]"
-                        />
-
-                        <button
-                            type="submit"
-                            className="shrink-0 rounded-lg bg-[var(--crimson)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:bg-[var(--crimson-dim)]"
-                        >
-                            Subscribe
-                        </button>
-                    </form>
+                    <FooterLink href="/terms">Terms of Service</FooterLink>
+                    <FooterLink href="/privacy">Privacy Policy</FooterLink>
+                    <FooterLink href="/cookies">Cookie Policy</FooterLink>
                 </div>
             </div>
 
-            <div className="mx-auto flex max-w-[1200px] flex-col gap-3 border-t border-[var(--border)] px-5 py-5 md:flex-row md:items-center md:justify-between md:px-10">
+            <div className="mx-auto flex max-w-[1200px] flex-col items-center gap-3 border-t border-[var(--border)] px-5 py-5 text-center md:flex-row md:justify-between md:px-10 md:text-left">
                 <p className="text-xs text-[var(--muted)]">
                     © 2026 StagePass. Portfolio project — not a real business.
                 </p>
 
-                <div className="flex flex-wrap gap-2">
-                    <span className="rounded border border-[var(--border)] px-2 py-1 font-[var(--font-mono)] text-[10px] text-[var(--muted)]">
+                <div className="flex flex-wrap justify-center gap-2 md:gap-3">
+                    <span className="rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 font-[var(--font-mono)] text-[10px] font-semibold text-[var(--muted)]">
                         VISA
                     </span>
-                    <span className="rounded border border-[var(--border)] px-2 py-1 font-[var(--font-mono)] text-[10px] text-[var(--muted)]">
+                    <span className="rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 font-[var(--font-mono)] text-[10px] font-semibold text-[var(--muted)]">
                         MASTERCARD
                     </span>
-                    <span className="rounded border border-[var(--border)] px-2 py-1 font-[var(--font-mono)] text-[10px] text-[var(--muted)]">
+                    <span className="rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 font-[var(--font-mono)] text-[10px] font-semibold text-[var(--muted)]">
                         PAYPAL
                     </span>
-                    <span className="rounded border border-[var(--border)] px-2 py-1 font-[var(--font-mono)] text-[10px] text-[var(--muted)]">
+                    <span className="rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 font-[var(--font-mono)] text-[10px] font-semibold text-[var(--muted)]">
                         G PAY
                     </span>
-                </div>
-
-                <div className="flex gap-5">
-                    {legalLinks.map((link) => (
-                        <Link
-                            key={link.href}
-                            href={link.href}
-                            className="text-xs text-[var(--muted)] transition hover:text-[var(--ink)]"
-                        >
-                            {link.label}
-                        </Link>
-                    ))}
+                    <span className="rounded border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 font-[var(--font-mono)] text-[10px] font-semibold text-[var(--muted)]">
+                        APPLE PAY
+                    </span>
                 </div>
             </div>
         </footer>
