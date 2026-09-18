@@ -1,5 +1,7 @@
 package com.truc.eventbooking.booking;
 
+import com.truc.eventbooking.auth.AuthRepository;
+import com.truc.eventbooking.auth.Customer;
 import com.truc.eventbooking.common.exception.BusinessConflictException;
 import com.truc.eventbooking.common.exception.ForbiddenException;
 import com.truc.eventbooking.payment.MockPaymentService;
@@ -13,6 +15,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import com.truc.eventbooking.booking.dto.BookingResponse;
 import com.truc.eventbooking.booking.dto.BookingDetailsDto;
+import com.truc.eventbooking.booking.dto.CustomerBookingDto;
 import com.truc.eventbooking.booking.dto.CreateBookingRequest;
 
 import java.math.BigDecimal;
@@ -27,14 +30,16 @@ public class BookingService {
     private final ReservationRepository reservationRepository;
     private final MockPaymentService paymentService;
     private final ReservationService reservationService;
+    private final AuthRepository authRepository;
 
     public BookingService(BookingRepository bookingRepository, ReservationRepository
             reservationRepository, SeatRepository seatRepository, MockPaymentService paymentService,
-                          SeatService seatService, ReservationService reservationService) {
+                          SeatService seatService, ReservationService reservationService, AuthRepository authRepository) {
         this.bookingRepository = bookingRepository;
         this.reservationRepository = reservationRepository;
         this.paymentService = paymentService;
         this.reservationService = reservationService;
+        this.authRepository = authRepository;
     }
 
     @Transactional
@@ -68,6 +73,22 @@ public class BookingService {
         Booking booking = bookingRepository.findById(bookingid).orElseThrow(()-> new RuntimeException("Booking not found"));
         return toBookingResponse(booking);
     }
+    
+    public List<CustomerBookingDto> getBookingsByCustomerId(Long customerId) {
+        Customer customer = authRepository.findById(customerId)
+            .orElseThrow(() -> new com.truc.eventbooking.common.exception.NotFoundException("CUSTOMER_NOT_FOUND", "Customer not found"));
+        
+        List<Booking> bookings = bookingRepository.findByCustomer(customer);
+        return bookings.stream().map(this::toCustomerBookingDto).toList();
+    }
+    
+    public CustomerBookingDto getBookingByTicketCode(String ticketCode) {
+        Booking booking = bookingRepository.findByTicketCode(ticketCode);
+        if (booking == null) {
+            throw new com.truc.eventbooking.common.exception.NotFoundException("BOOKING_NOT_FOUND", "Ticket not found");
+        }
+        return toCustomerBookingDto(booking);
+    }
 
     private CreateBookingRequest toCreateBookingRequest(Booking booking) {
         return new CreateBookingRequest(
@@ -97,6 +118,37 @@ public class BookingService {
             booking.getCreatedAt(),
             paymentMethod,
             reservationService.getReservationSummaryById(booking.getReservation().getReservationId(), booking.getReservation().getCustomer().getCustomerId())
+        );
+    }
+    
+    private CustomerBookingDto toCustomerBookingDto(Booking booking) {
+        var reservation = booking.getReservation();
+        var firstSeat = reservation.getReservationSeats().get(0);
+        var seat = firstSeat.getSeat();
+        var event = seat.getEvent();
+        
+        BigDecimal totalAmount = reservation.getReservationSeats().stream()
+            .map(rs -> rs.getSeat().getSeatPrice())
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        return new CustomerBookingDto(
+            booking.getBookingID(),
+            booking.getTicketCode(),
+            booking.getStatus(),
+            totalAmount,
+            booking.getCreatedAt(),
+            new CustomerBookingDto.EventSummary(
+                event.getName(),
+                event.getImageUrl(),
+                event.getVenueName(),
+                event.getCity(),
+                event.getStartTime()
+            ),
+            new CustomerBookingDto.SeatInfo(
+                seat.getSection(),
+                seat.getRowLabel(),
+                seat.getSeatNumber()
+            )
         );
     }
 

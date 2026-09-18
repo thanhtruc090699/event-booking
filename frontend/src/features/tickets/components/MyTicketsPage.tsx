@@ -1,61 +1,94 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/cn";
 import { TicketCard } from "@/features/tickets/components/TicketCard";
+import { getCustomerBookings } from "@/features/booking/api/bookingApi";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import type { CustomerBookingDto } from "@/features/booking/api/bookingApi";
 
 type TicketTab = "upcoming" | "past";
 
-const upcomingTickets = [
-    {
-        eventTitle: "Rock Concert Berlin",
-        eventImageUrl: "https://picsum.photos/seed/event-1/120/120",
-        section: "Section A",
-        row: "Row 2",
-        seat: "Seat 5",
-        dateTime: "20/09/2026, 19:00",
-        ticketCode: "TCK-9001",
-        status: "UPCOMING" as const,
-    },
-    {
-        eventTitle: "Electronic Nights Hamburg",
-        eventImageUrl: "https://picsum.photos/seed/event-3/120/120",
-        section: "Section B",
-        row: "Row 1",
-        seat: "Seat 3",
-        dateTime: "02/10/2026, 22:00",
-        ticketCode: "TCK-9014",
-        status: "UPCOMING" as const,
-    },
-    {
-        eventTitle: "Stand-up Comedy Cologne",
-        eventImageUrl: "https://picsum.photos/seed/event-6/120/120",
-        section: "Section C",
-        row: "Row 1",
-        seat: "Seat 1",
-        dateTime: "28/09/2026, 20:30",
-        ticketCode: "TCK-8990",
-        status: "CANCELLED" as const,
-    },
-];
+function getStatusLabel(status: string): "UPCOMING" | "USED" | "CANCELLED" {
+    if (status === "CONFIRMED") return "UPCOMING";
+    if (status === "CANCELLED") return "CANCELLED";
+    return "USED";
+}
 
-const pastTickets = [
-    {
-        eventTitle: "Classical Symphony Vienna",
-        eventImageUrl: "https://picsum.photos/seed/event-4/120/120",
-        section: "Section A",
-        row: "Row 3",
-        seat: "Seat 8",
-        dateTime: "10/08/2026, 19:30",
-        ticketCode: "TCK-8801",
-        status: "USED" as const,
-    },
-];
+function formatDate(isoString: string): string {
+    const date = new Date(isoString);
+    return date.toLocaleDateString('de-DE', { 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
 
 export function MyTicketsPage() {
     const [activeTab, setActiveTab] = useState<TicketTab>("upcoming");
+    const [bookings, setBookings] = useState<CustomerBookingDto[]>([]);
+    const [loading, setLoading] = useState(true);
+    const { accessToken, isAuthenticated } = useAuth();
 
-    const tickets = activeTab === "upcoming" ? upcomingTickets : pastTickets;
+    useEffect(() => {
+        if (!accessToken) {
+            setLoading(false);
+            return;
+        }
+
+        getCustomerBookings(accessToken)
+            .then(data => {
+                setBookings(data);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error("Failed to fetch bookings:", err);
+                setLoading(false);
+            });
+    }, [accessToken]);
+
+    const tickets = bookings.map(booking => ({
+        eventTitle: booking.event.title,
+        eventImageUrl: booking.event.imageUrl,
+        section: `Section ${booking.seat.section}`,
+        row: `Row ${booking.seat.rowLabel}`,
+        seat: `Seat ${booking.seat.seatNumber}`,
+        dateTime: formatDate(booking.event.startDate),
+        ticketCode: booking.bookingReference,
+        status: getStatusLabel(booking.status),
+    }));
+
+    const displayedTickets = activeTab === "upcoming" 
+        ? tickets.filter(t => t.status === "UPCOMING" || t.status === "CANCELLED")
+        : tickets.filter(t => t.status === "USED");
+
+    if (!isAuthenticated) {
+        return (
+            <main className="mx-auto max-w-[900px] px-5 pt-9 md:px-10">
+                <h1 className="font-[var(--font-bebas)] text-[38px] tracking-wide text-[var(--ink)]">
+                    My Tickets
+                </h1>
+                <div className="mt-[18px] text-center">
+                    <p className="text-[var(--muted)]">Please login to view your tickets</p>
+                </div>
+            </main>
+        );
+    }
+
+    if (loading) {
+        return (
+            <main className="mx-auto max-w-[900px] px-5 pt-9 md:px-10">
+                <h1 className="font-[var(--font-bebas)] text-[38px] tracking-wide text-[var(--ink)]">
+                    My Tickets
+                </h1>
+                <div className="mt-[18px] flex items-center justify-center min-h-[400px]">
+                    <p className="text-[var(--muted)]">Loading your tickets...</p>
+                </div>
+            </main>
+        );
+    }
 
     return (
         <main className="mx-auto max-w-[900px] px-5 pt-9 md:px-10">
@@ -92,19 +125,25 @@ export function MyTicketsPage() {
             </div>
 
             <div className="flex flex-col gap-[14px] pt-5">
-                {tickets.map((ticket) => (
-                    <TicketCard
-                        key={ticket.ticketCode}
-                        eventTitle={ticket.eventTitle}
-                        eventImageUrl={ticket.eventImageUrl}
-                        section={ticket.section}
-                        row={ticket.row}
-                        seat={ticket.seat}
-                        dateTime={ticket.dateTime}
-                        ticketCode={ticket.ticketCode}
-                        status={ticket.status}
-                    />
-                ))}
+                {displayedTickets.length === 0 ? (
+                    <div className="text-center py-10 text-[var(--muted)]">
+                        No {activeTab} tickets found
+                    </div>
+                ) : (
+                    displayedTickets.map((ticket) => (
+                        <TicketCard
+                            key={ticket.ticketCode}
+                            eventTitle={ticket.eventTitle}
+                            eventImageUrl={ticket.eventImageUrl}
+                            section={ticket.section}
+                            row={ticket.row}
+                            seat={ticket.seat}
+                            dateTime={ticket.dateTime}
+                            ticketCode={ticket.ticketCode}
+                            status={ticket.status}
+                        />
+                    ))
+                )}
             </div>
         </main>
     );

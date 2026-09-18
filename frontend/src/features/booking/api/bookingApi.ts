@@ -59,6 +59,26 @@ export type BookingDetailsDto = {
     reservation: ReservationSummaryDto;
 };
 
+export type CustomerBookingDto = {
+    id: number;
+    bookingReference: string;
+    status: BookingStatus;
+    totalAmount: number;
+    createdAt: string;
+    event: {
+        title: string;
+        imageUrl: string;
+        venue: string;
+        city: string;
+        startDate: string;
+    };
+    seat: {
+        section: string;
+        rowLabel: string;
+        seatNumber: string;
+    };
+};
+
 export function createReservation(payload: CreateReservationRequest, token: string) {
     return apiClient<ReservationSummaryDto>("/api/reservations", {
         method: "POST",
@@ -83,6 +103,18 @@ export function createBooking(payload: createBookingRequest, token: string) {
 
 export function getBooking(bookingId: string, token: string) {
     return apiClient<BookingDetailsDto>(`/api/bookings/${bookingId}`, {
+        token
+    });
+}
+
+export function getCustomerBookings(token: string) {
+    return apiClient<CustomerBookingDto[]>("/api/bookings/customer/me", {
+        token
+    });
+}
+
+export function getTicketByCode(ticketCode: string, token: string) {
+    return apiClient<CustomerBookingDto>(`/api/bookings/ticket/${ticketCode}`, {
         token
     });
 }
