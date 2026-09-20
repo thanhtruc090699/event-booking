@@ -95,4 +95,36 @@ public class PayPalClient {
 
         return response.get("id").toString();
     }
+
+    public String captureOrder(String providerOrderId) {
+        String accessToken = getAccessToken();
+
+        Map<?, ?> response = restClient.post()
+                .uri(baseUrl + "/v2/checkout/orders/" + providerOrderId + "/capture")
+                .headers(headers -> headers.setBearerAuth(accessToken))
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of())
+                .retrieve()
+                .body(Map.class);
+
+        if (response == null || !"COMPLETED".equals(response.get("status"))) {
+            throw new IllegalStateException("PayPal capture was not completed");
+        }
+
+        Object purchaseUnitsValue = response.get("purchase_units");
+        if (!(purchaseUnitsValue instanceof List<?> purchaseUnits) || purchaseUnits.isEmpty()) {
+            throw new IllegalStateException("PayPal capture response has no purchase units");
+        }
+
+        Map<?, ?> purchaseUnit = (Map<?, ?>) purchaseUnits.get(0);
+        Map<?, ?> payments = (Map<?, ?>) purchaseUnit.get("payments");
+        List<?> captures = (List<?>) payments.get("captures");
+
+        if (captures == null || captures.isEmpty()) {
+            throw new IllegalStateException("PayPal capture response has no capture ID");
+        }
+
+        Map<?, ?> capture = (Map<?, ?>) captures.get(0);
+        return Objects.requireNonNull(capture.get("id")).toString();
+    }
 }

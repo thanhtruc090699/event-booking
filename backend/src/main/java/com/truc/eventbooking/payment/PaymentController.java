@@ -25,15 +25,8 @@ public class PaymentController {
     @PostMapping("/{paymentId}/capture")
     public ResponseEntity<Void> capturePayment(
             @PathVariable Long paymentId,
-            @RequestParam String payerId,
             @AuthenticationPrincipal CustomerUserPrincipal principal) {
-        
-        Payment payment = paymentService.capturePayment(paymentId, payerId);
-        
-        if (!payment.getReservation().getCustomer().getCustomerId().equals(principal.getCustomerId())) {
-            throw new com.truc.eventbooking.common.exception.ForbiddenException("PAYMENT_ACCESS_DENIED", "You are not allowed to capture this payment");
-        }
-        
+        paymentService.capturePayment(paymentId, principal.getCustomerId());
         return ResponseEntity.ok().build();
     }
 }

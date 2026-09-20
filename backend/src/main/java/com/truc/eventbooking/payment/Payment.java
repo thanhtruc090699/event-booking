@@ -49,6 +49,9 @@ public class Payment {
         this.provider = provider;
         this.amount = amount;
         this.currency = currency;
+        this.status = PaymentStatus.PENDING;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = this.createdAt;
     }
 
     public Long getId() {
@@ -82,6 +85,7 @@ public class Payment {
         return updatedAt;
     }
     public PaymentStatus setStatus(PaymentStatus status) {
+        this.updatedAt = LocalDateTime.now();
         return this.status = status;
     }
     public void setProviderOrderId(String providerOrderId) {

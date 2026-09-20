@@ -21,7 +21,6 @@ export function CheckoutPage() {
     useEffect(() => {
         // Nếu không có reservationId hoặc accessToken, dừng luôn
         if (!reservationId || !accessToken) {
-            setLoading(false);
             return;
         }
         
@@ -178,16 +177,11 @@ export function CheckoutPage() {
                     Payment method
                 </h2>
 
-                {/* Payment options - for now just display, will implement later */}
-                <div className="space-y-2">
-                    <div className="flex items-center gap-3 p-3 rounded-lg border border-[var(--gold)] bg-[var(--gold)]/10">
-                        <input type="radio" name="payment" defaultChecked className="accent-[var(--crimson)]" />
-                        <span className="text-sm font-medium text-[var(--ink)]">Credit / Debit Card</span>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 rounded-lg border border-[var(--border)]">
-                        <input type="radio" name="payment" className="accent-[var(--crimson)]" />
-                        <span className="text-sm font-medium text-[var(--ink)]">PayPal</span>
-                    </div>
+                <div className="flex items-center gap-3 rounded-lg border border-[var(--gold)] bg-[var(--gold)]/10 p-3">
+                    <span className="relative h-4 w-4 rounded-full border-2 border-[var(--gold)]">
+                        <span className="absolute inset-[2px] rounded-full bg-[var(--gold)]" />
+                    </span>
+                    <span className="text-sm font-medium text-[var(--ink)]">PayPal</span>
                 </div>
             </section>
 

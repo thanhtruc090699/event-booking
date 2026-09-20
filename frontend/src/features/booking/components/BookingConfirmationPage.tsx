@@ -18,7 +18,6 @@ export function BookingConfirmationPage() {
 
     useEffect(() => {
         if (!bookingId || !accessToken) {
-            setLoading(false);
             return;
         }
 
@@ -32,6 +31,21 @@ export function BookingConfirmationPage() {
                 setLoading(false);
             });
     }, [bookingId, accessToken]);
+
+    if (!bookingId || !accessToken) {
+        return (
+            <main className="mx-auto max-w-[480px] px-6 pb-16 pt-10">
+                <div className="text-center">
+                    <p className="text-[var(--muted)]">
+                        {!bookingId ? "No booking selected" : "Please login to continue"}
+                    </p>
+                    <Link href="/" className="mt-4 inline-block text-[var(--gold)]">
+                        Browse Events →
+                    </Link>
+                </div>
+            </main>
+        );
+    }
 
     if (loading) {
         return (
@@ -127,7 +141,7 @@ export function BookingConfirmationPage() {
 
             <div className="mt-5 flex flex-col gap-2.5">
                 <Link
-                    href={`/tickets/${booking.id}`}
+                    href={`/tickets/${booking.bookingReference}`}
                     className="block rounded-lg bg-[var(--crimson)] px-5 py-3.5 text-center text-sm font-semibold text-[var(--ink)] transition hover:bg-[var(--crimson-dim)]"
                 >
                     View Tickets

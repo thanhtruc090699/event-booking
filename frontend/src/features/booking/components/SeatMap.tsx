@@ -22,8 +22,15 @@ type SeatMapProps = {
     eventId: string;
 };
 
-const rows = 4;
 const seatsPerRow = 8;
+
+function convertSeatStatus(status: "AVAILABLE" | "RESERVED" | "BOOKED"): "available" | "held" | "booked" {
+    switch (status) {
+        case "AVAILABLE": return "available";
+        case "RESERVED": return "held";
+        case "BOOKED": return "booked";
+    }
+}
 
 function getSeatClass(status: SeatStatus) {
     return cn(
@@ -48,7 +55,15 @@ function LegendItem({
 }) {
     return (
         <div className="flex items-center gap-2 text-sm text-[var(--muted)]">
-            <span className={cn("h-4 w-4 rounded", getSeatClass(status))} />
+            <span
+                className={cn(
+                    "h-4 w-4 rounded border",
+                    status === "available" && "border-zinc-700 bg-[var(--surface-hover)]",
+                    status === "selected" && "border-[var(--gold)] bg-[var(--gold)]",
+                    status === "held" && "border-dashed border-[var(--crimson)] bg-[var(--surface-hover)]",
+                    status === "booked" && "border-[var(--border)] bg-[var(--void)]"
+                )}
+            />
             {label}
         </div>
     );
@@ -62,22 +77,12 @@ export function SeatMap({ eventId }: SeatMapProps) {
     const [selectedSeatIds, setSelectedSeatIds] = useState<string[]>([]);
     const [creatingReservation, setCreatingReservation] = useState(false);
 
-    if (loading) {
-        return (
-            <section className="mx-auto max-w-6xl px-5 py-12 md:px-10">
-                <div className="flex items-center justify-center min-h-[400px]">
-                    <p className="text-[var(--muted)]">Loading seats...</p>
-                </div>
-            </section>
-        );
-    }
-
     useEffect(() => {
         async function fetchSeats() {
             try {
                 const data = await getEventSeats(eventId);
                 const convertedSeats = data.map((seat) => ({
-                    id: seat.seatId.toString(),
+                    id: seat.id.toString(),
                     row: parseInt(seat.rowLabel),
                     number: parseInt(seat.seatNumber),
                     baseStatus: convertSeatStatus(seat.status),
@@ -93,13 +98,14 @@ export function SeatMap({ eventId }: SeatMapProps) {
         fetchSeats();
     }, [eventId]);
 
-    function convertSeatStatus(status: "AVAILABLE" | "RESERVED" | "BOOKED"): "available" | "held" | "booked" {
-        switch (status) {
-            case "AVAILABLE": return "available";
-            case "RESERVED": return "held";
-            case "BOOKED": return "booked";
-            default: return "available";
-        }
+    if (loading) {
+        return (
+            <section className="mx-auto max-w-6xl px-5 py-12 md:px-10">
+                <div className="flex items-center justify-center min-h-[400px]">
+                    <p className="text-[var(--muted)]">Loading seats...</p>
+                </div>
+            </section>
+        );
     }
 
     function getStatus(seat: Seat): SeatStatus {
@@ -120,6 +126,17 @@ export function SeatMap({ eventId }: SeatMapProps) {
                 : [...current, seat.id]
         );
     }
+
+    const orderedSeats = [...seats].sort(
+        (first, second) => first.row - second.row || first.number - second.number
+    );
+    const seatRows = Array.from(
+        { length: Math.ceil(orderedSeats.length / seatsPerRow) },
+        (_, rowIndex) => orderedSeats.slice(
+            rowIndex * seatsPerRow,
+            (rowIndex + 1) * seatsPerRow
+        )
+    );
 
     async function continueToBooking() {
         if (selectedSeatIds.length === 0) {
@@ -155,50 +172,43 @@ export function SeatMap({ eventId }: SeatMapProps) {
             id="seat-selection"
             className="mx-auto max-w-6xl px-5 py-12 md:px-10"
         >
-            <div className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6 md:p-8">
-                <div className="mb-8 rounded-lg bg-[var(--border)] px-4 py-3 text-center font-[var(--font-mono)] text-xs uppercase tracking-[0.3em] text-[var(--muted)]">
+            <div className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-5 md:p-8">
+                <div className="mb-10 rounded-lg bg-[var(--border)] px-4 py-3 text-center font-[var(--font-mono)] text-xs uppercase tracking-[0.3em] text-[var(--muted)]">
                     Stage
                 </div>
 
                 <div className="overflow-x-auto">
-                    <div className="mx-auto min-w-[440px]">
-                        {Array.from({ length: rows }).map((_, rowIndex) => {
-                            const rowNumber = rowIndex + 1;
-                            const rowSeats = seats.filter(
-                                (seat) => seat.row === rowNumber
-                            );
+                    <div className="mx-auto flex min-w-[400px] w-fit flex-col gap-3">
+                        {seatRows.map((rowSeats, rowIndex) => (
+                            <div
+                                key={rowIndex}
+                                className="grid grid-cols-8 gap-3"
+                            >
+                                {rowSeats.map((seat) => {
+                                    const status = getStatus(seat);
 
-                            return (
-                                <div
-                                    key={rowNumber}
-                                    className="mb-3 flex justify-center gap-3"
-                                >
-                                    {rowSeats.map((seat) => {
-                                        const status = getStatus(seat);
-
-                                        return (
-                                            <button
-                                                key={seat.id}
-                                                type="button"
-                                                disabled={
-                                                    seat.baseStatus === "held" ||
-                                                    seat.baseStatus === "booked"
-                                                }
-                                                onClick={() => toggleSeat(seat)}
-                                                className={getSeatClass(status)}
-                                                aria-label={`Row ${seat.row}, Seat ${seat.number}, ${status}`}
-                                            >
-                                                {seat.number}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            );
-                        })}
+                                    return (
+                                        <button
+                                            key={seat.id}
+                                            type="button"
+                                            disabled={
+                                                seat.baseStatus === "held" ||
+                                                seat.baseStatus === "booked"
+                                            }
+                                            onClick={() => toggleSeat(seat)}
+                                            className={getSeatClass(status)}
+                                            aria-label={`Row ${seat.row}, Seat ${seat.number}, ${status}`}
+                                        >
+                                            {seat.number}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        ))}
                     </div>
                 </div>
 
-                <div className="mt-8 flex flex-wrap justify-center gap-5">
+                <div className="mt-9 flex flex-wrap justify-center gap-x-8 gap-y-3">
                     <LegendItem label="Available" status="available" />
                     <LegendItem label="Selected" status="selected" />
                     <LegendItem label="Held" status="held" />

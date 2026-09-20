@@ -2,7 +2,6 @@ import { apiClient } from "@/lib/api/apiClient";
 
 export enum PaymentProviderType {
   PAYPAL = "PAYPAL",
-  STRIPE = "STRIPE",
 }
 
 export enum PaymentStatus {
@@ -40,7 +39,16 @@ export function createPaymentOrder(payload: CreatePaymentOrderRequest, token: st
     });
 }
 
+export function capturePayment(paymentId: number, token: string) {
+    return apiClient<void>(
+        `/api/payments/${paymentId}/capture`,
+        {
+            method: "POST",
+            token,
+        }
+    );
+}
 
 
 
-    
+

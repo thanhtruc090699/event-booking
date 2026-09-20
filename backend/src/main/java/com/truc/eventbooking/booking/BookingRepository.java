@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
     
@@ -13,5 +14,5 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findByCustomer(@Param("customer") Customer customer);
     
     @Query("SELECT b FROM Booking b WHERE b.ticketCode = :ticketCode")
-    Booking findByTicketCode(@Param("ticketCode") String ticketCode);
+    Optional<Booking> findByTicketCode(@Param("ticketCode") String ticketCode);
 }

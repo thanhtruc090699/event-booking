@@ -12,8 +12,6 @@ import com.truc.eventbooking.booking.dto.CreateBookingRequest;
 
 import java.util.List;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/bookings")
 public class BookingController {
@@ -35,8 +33,10 @@ public class BookingController {
     }
 
     @GetMapping("/{bookingId}")
-    public BookingResponse getBooking(@PathVariable Long bookingId) {
-        return bookingService.getBookingById(bookingId);
+    public BookingDetailsDto getBooking(
+            @PathVariable Long bookingId,
+            @AuthenticationPrincipal CustomerUserPrincipal principal) {
+        return bookingService.getBookingDetailsById(bookingId, principal.getCustomerId());
     }
     
     @GetMapping("/customer/me")
@@ -45,7 +45,9 @@ public class BookingController {
     }
     
     @GetMapping("/ticket/{ticketCode}")
-    public CustomerBookingDto getTicketByCode(@PathVariable String ticketCode) {
-        return bookingService.getBookingByTicketCode(ticketCode);
+    public CustomerBookingDto getTicketByCode(
+            @PathVariable String ticketCode,
+            @AuthenticationPrincipal CustomerUserPrincipal principal) {
+        return bookingService.getBookingByTicketCode(ticketCode, principal.getCustomerId());
     }
 }

@@ -47,6 +47,7 @@ public class PaymentService {
         this.currency = currency;
     }
 
+    @Transactional
     public PaymentOrderResponse createPaymentOrder(
             CreatePaymentRequest request,
             Long customerId
@@ -91,6 +92,25 @@ public class PaymentService {
             throw new BusinessConflictException(
                     "RESERVATION_EXPIRED",
                     "Reservation expired"
+            );
+        }
+
+        Payment existingPayment = paymentRepository
+                .findByReservation_ReservationId(reservationId)
+                .orElse(null);
+
+        if (existingPayment != null) {
+            if (existingPayment.getStatus() == PaymentStatus.PENDING
+                    && existingPayment.getProvider() == request.paymentProviderType()) {
+                return new PaymentOrderResponse(
+                        existingPayment.getId(),
+                        existingPayment.getProviderOrderId()
+                );
+            }
+
+            throw new BusinessConflictException(
+                    "PAYMENT_ALREADY_EXISTS",
+                    "A payment already exists for this reservation"
             );
         }
 
@@ -141,16 +161,33 @@ public class PaymentService {
     }
 
     @Transactional
-    public Payment capturePayment(Long paymentId, String payerId) {
+    public Payment capturePayment(Long paymentId, Long customerId) {
         Payment payment = paymentRepository.findById(paymentId)
             .orElseThrow(() -> new NotFoundException("PAYMENT_NOT_FOUND", "Payment not found"));
+
+        if (!payment.getReservation().getCustomer().getCustomerId().equals(customerId)) {
+            throw new com.truc.eventbooking.common.exception.ForbiddenException(
+                    "PAYMENT_ACCESS_DENIED",
+                    "You are not allowed to capture this payment"
+            );
+        }
 
         if (!payment.getStatus().equals(PaymentStatus.PENDING)) {
             throw new BusinessConflictException("PAYMENT_ALREADY_CAPTURED", "Payment already captured");
         }
 
+        PaymentProvider provider = paymentProviders.get(payment.getProvider());
+        if (provider == null) {
+            throw new BusinessConflictException(
+                    "PAYMENT_PROVIDER_NOT_SUPPORTED",
+                    "Payment provider is not supported"
+            );
+        }
+
+        String captureId = provider.captureOrder(payment.getProviderOrderId());
+
         payment.setStatus(PaymentStatus.COMPLETED);
-        payment.setProviderCaptureId(payerId);
+        payment.setProviderCaptureId(captureId);
         return paymentRepository.save(payment);
     }
 }

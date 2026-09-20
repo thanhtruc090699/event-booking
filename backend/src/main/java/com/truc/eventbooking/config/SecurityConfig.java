@@ -31,6 +31,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/events/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/reservations").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/bookings").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/bookings/*").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/bookings/customer/me").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/bookings/ticket/**").authenticated()
                         .anyRequest().permitAll()
                 )
                 .addFilterBefore(

@@ -81,6 +81,31 @@ public class BookingService {
         Booking booking = bookingRepository.findById(bookingid).orElseThrow(()-> new RuntimeException("Booking not found"));
         return toBookingResponse(booking);
     }
+
+    @Transactional
+    public BookingDetailsDto getBookingDetailsById(Long bookingId, Long customerId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new com.truc.eventbooking.common.exception.NotFoundException(
+                        "BOOKING_NOT_FOUND",
+                        "Booking not found"
+                ));
+
+        if (!booking.getReservation().getCustomer().getCustomerId().equals(customerId)) {
+            throw new ForbiddenException(
+                    "BOOKING_ACCESS_DENIED",
+                    "You are not allowed to view this booking"
+            );
+        }
+
+        Payment payment = paymentRepository
+                .findByReservation_ReservationId(booking.getReservation().getReservationId())
+                .orElseThrow(() -> new BusinessConflictException(
+                        "PAYMENT_NOT_FOUND",
+                        "Payment not found"
+                ));
+
+        return toBookingDetailsDto(booking, payment.getProvider().name());
+    }
     
     public List<CustomerBookingDto> getBookingsByCustomerId(Long customerId) {
         Customer customer = authRepository.findById(customerId)
@@ -90,12 +115,34 @@ public class BookingService {
         return bookings.stream().map(this::toCustomerBookingDto).toList();
     }
     
-    public CustomerBookingDto getBookingByTicketCode(String ticketCode) {
-        Booking booking = bookingRepository.findByTicketCode(ticketCode);
-        if (booking == null) {
-            throw new com.truc.eventbooking.common.exception.NotFoundException("BOOKING_NOT_FOUND", "Ticket not found");
+    @Transactional
+    public CustomerBookingDto getBookingByTicketCode(String ticketReference, Long customerId) {
+        Booking booking = bookingRepository.findByTicketCode(ticketReference)
+                .orElseGet(() -> findBookingByLegacyId(ticketReference));
+
+        if (!booking.getReservation().getCustomer().getCustomerId().equals(customerId)) {
+            throw new ForbiddenException(
+                    "TICKET_ACCESS_DENIED",
+                    "You are not allowed to view this ticket"
+            );
         }
+
         return toCustomerBookingDto(booking);
+    }
+
+    private Booking findBookingByLegacyId(String ticketReference) {
+        try {
+            return bookingRepository.findById(Long.parseLong(ticketReference))
+                    .orElseThrow(() -> new com.truc.eventbooking.common.exception.NotFoundException(
+                            "BOOKING_NOT_FOUND",
+                            "Ticket not found"
+                    ));
+        } catch (NumberFormatException exception) {
+            throw new com.truc.eventbooking.common.exception.NotFoundException(
+                    "BOOKING_NOT_FOUND",
+                    "Ticket not found"
+            );
+        }
     }
 
     private CreateBookingRequest toCreateBookingRequest(Booking booking) {

@@ -11,4 +11,6 @@ String createOrder(
         BigDecimal amount,
         String currency
 );
+
+String captureOrder(String providerOrderId);
 }
