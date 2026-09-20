@@ -4,7 +4,8 @@ import com.truc.eventbooking.auth.AuthRepository;
 import com.truc.eventbooking.auth.Customer;
 import com.truc.eventbooking.common.exception.BusinessConflictException;
 import com.truc.eventbooking.common.exception.ForbiddenException;
-import com.truc.eventbooking.payment.MockPaymentService;
+import com.truc.eventbooking.payment.PaymentRepository;
+import com.truc.eventbooking.payment.Payment;
 import com.truc.eventbooking.payment.PaymentStatus;
 import com.truc.eventbooking.reservation.Reservation;
 import com.truc.eventbooking.reservation.ReservationRepository;
@@ -28,16 +29,16 @@ import java.util.UUID;
 public class BookingService {
     private final BookingRepository bookingRepository;
     private final ReservationRepository reservationRepository;
-    private final MockPaymentService paymentService;
+    private final PaymentRepository paymentRepository;
     private final ReservationService reservationService;
     private final AuthRepository authRepository;
 
     public BookingService(BookingRepository bookingRepository, ReservationRepository
-            reservationRepository, SeatRepository seatRepository, MockPaymentService paymentService,
+            reservationRepository, PaymentRepository paymentRepository,
                           SeatService seatService, ReservationService reservationService, AuthRepository authRepository) {
         this.bookingRepository = bookingRepository;
         this.reservationRepository = reservationRepository;
-        this.paymentService = paymentService;
+        this.paymentRepository = paymentRepository;
         this.reservationService = reservationService;
         this.authRepository = authRepository;
     }
@@ -48,18 +49,25 @@ public class BookingService {
 
         Reservation reservation = reservationRepository.findById(reservationId).orElseThrow(()-> new BusinessConflictException("RESERVATION_NOT_FOUND","Reservation not found"));
 
-        if(customerId!=reservation.getCustomer().getCustomerId()) throw new ForbiddenException("RESERVATION_ACCESS_DENIED","You are not allowed to book this reservation");
+        if(!customerId.equals(reservation.getCustomer().getCustomerId())) {
+            throw new ForbiddenException("RESERVATION_ACCESS_DENIED","You are not allowed to book this reservation");
+        }
 
+        Payment payment = paymentRepository.findByReservation_ReservationId(reservationId)
+            .orElseThrow(() -> new BusinessConflictException("PAYMENT_NOT_FOUND", "Payment not found"));
 
-        PaymentStatus paymentStatus = paymentService.pay(customerId, reservationId);
-        if(paymentStatus!=PaymentStatus.SUCCEEDED){
+        if (!payment.getStatus().equals(PaymentStatus.COMPLETED)) {
             reservationService.markAsCancelled(reservationId);
-            throw new BusinessConflictException("PAYMENT_FAILED","Payment failed");
+            throw new BusinessConflictException("PAYMENT_NOT_COMPLETED", "Payment has not been completed");
+        }
+
+        if (!payment.getReservation().getReservationId().equals(reservationId)) {
+            throw new BusinessConflictException("PAYMENT_RESERVATION_MISMATCH", "Payment does not match reservation");
         }
 
         reservationService.markAsConfirmed(reservationId);
         String ticketCode = generatedTicketCode();
-        Booking booking = new Booking(reservation,ticketCode);
+        Booking booking = new Booking(reservation, ticketCode);
         Booking savedBooking = bookingRepository.save(booking);
 
         return toBookingDetailsDto(savedBooking, request.paymentMethod());

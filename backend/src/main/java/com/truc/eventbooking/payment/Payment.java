@@ -88,4 +88,8 @@ public class Payment {
         this.providerOrderId = providerOrderId;
     }
 
+    public void setProviderCaptureId(String providerCaptureId) {
+        this.providerCaptureId = providerCaptureId;
+    }
+
 }

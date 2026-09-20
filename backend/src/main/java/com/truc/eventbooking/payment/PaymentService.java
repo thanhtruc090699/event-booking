@@ -10,6 +10,7 @@ import com.truc.eventbooking.reservation.ReservationRepository;
 import com.truc.eventbooking.reservation.ReservationStatus;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -129,16 +130,27 @@ public class PaymentService {
                         currency
                 );
 
-        // save external order ID
-        payment.setProviderOrderId(
-                providerOrderId
-        );
-
+        payment.setProviderOrderId(providerOrderId);
+        payment.setStatus(PaymentStatus.PENDING);
         paymentRepository.save(payment);
 
         return new PaymentOrderResponse(
                 payment.getId(),
                 providerOrderId
         );
+    }
+
+    @Transactional
+    public Payment capturePayment(Long paymentId, String payerId) {
+        Payment payment = paymentRepository.findById(paymentId)
+            .orElseThrow(() -> new NotFoundException("PAYMENT_NOT_FOUND", "Payment not found"));
+
+        if (!payment.getStatus().equals(PaymentStatus.PENDING)) {
+            throw new BusinessConflictException("PAYMENT_ALREADY_CAPTURED", "Payment already captured");
+        }
+
+        payment.setStatus(PaymentStatus.COMPLETED);
+        payment.setProviderCaptureId(payerId);
+        return paymentRepository.save(payment);
     }
 }
