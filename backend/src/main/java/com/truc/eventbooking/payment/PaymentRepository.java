@@ -1,4 +1,9 @@
-package com.truc.eventbooking.payment.paypal;
+package com.truc.eventbooking.payment;
 
-public class PaymentRepository {
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+
+public interface PaymentRepository extends JpaRepository<Payment, Long> {
+    Optional<Payment> findByProviderOrderId(String providerOrderId);
 }

@@ -1,4 +1,5 @@
 package com.truc.eventbooking.payment;
 
-public class PaymentProviderType {
+public enum PaymentProviderType {
+    PAYPAL
 }

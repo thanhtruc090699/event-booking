@@ -1,7 +1,7 @@
 package com.truc.eventbooking.payment.dto;
 
-public record PayPalOrderResponse(
+public record PaymentOrderResponse(
         Long paymentId,
-        String paypalOrderId
+        String providerOrderId
 ) {
 }

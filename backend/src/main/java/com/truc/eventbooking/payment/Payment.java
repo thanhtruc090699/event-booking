@@ -1,6 +1,5 @@
-package com.truc.eventbooking.payment.paypal;
+package com.truc.eventbooking.payment;
 
-import com.truc.eventbooking.payment.PaymentStatus;
 import com.truc.eventbooking.reservation.Reservation;
 import jakarta.persistence.*;
 
@@ -18,8 +17,9 @@ public class Payment {
     @JoinColumn(name = "reservation_id", nullable = false)
     private Reservation reservation;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private  String provider;
+    private  PaymentProviderType provider;
 
     private String providerOrderId;
 
@@ -42,7 +42,7 @@ public class Payment {
     protected Payment() {}
 
     public Payment(Reservation reservation,
-                   String provider,
+                   PaymentProviderType provider,
                    BigDecimal amount,
                    String currency) {
         this.reservation = reservation;
@@ -57,7 +57,7 @@ public class Payment {
     public Reservation getReservation() {
         return reservation;
     }
-    public String getProvider() {
+    public PaymentProviderType getProvider() {
         return provider;
     }
     public String getProviderOrderId() {
