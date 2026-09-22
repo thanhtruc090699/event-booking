@@ -26,7 +26,7 @@ export function TimerBanner({
         }
         
         function updateTimer() {
-            const expiryTime = new Date(expiresAt).getTime();
+            const expiryTime = new Date(expiresAt!).getTime();
             const now = Date.now();
             const diff = expiryTime - now;
             
