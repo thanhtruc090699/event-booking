@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { cn } from "@/lib/cn";
 
 type EventCardProps = {
@@ -45,11 +46,14 @@ export function EventCard({
                 </span>
             )}
 
-            <img
-                src={imageUrl}
-                alt={title}
-                className="h-[120px] w-full object-cover"
-            />
+            <div className="relative h-[120px] w-full overflow-hidden">
+                <Image
+                    src={imageUrl}
+                    alt={title}
+                    fill
+                    className="object-cover"
+                />
+            </div>
 
             <div className="p-3">
                 <h3 className="truncate text-sm font-semibold text-[var(--ink)]">

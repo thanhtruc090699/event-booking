@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { getTicketByCode } from "@/features/booking/api/bookingApi";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -26,20 +27,23 @@ export function TicketDetailPage({ ticketCode }: TicketDetailPageProps) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!accessToken) {
-            setLoading(false);
-            return;
-        }
+        const loadTicket = async () => {
+            try {
+                if (!accessToken) {
+                    setLoading(false);
+                    return;
+                }
 
-        getTicketByCode(ticketCode, accessToken)
-            .then(data => {
+                const data = await getTicketByCode(ticketCode, accessToken);
                 setBooking(data);
-                setLoading(false);
-            })
-            .catch(err => {
+            } catch (err) {
                 console.error("Failed to fetch ticket:", err);
+            } finally {
                 setLoading(false);
-            });
+            }
+        };
+
+        loadTicket();
     }, [ticketCode, accessToken]);
 
     if (loading) {
@@ -82,10 +86,11 @@ export function TicketDetailPage({ ticketCode }: TicketDetailPageProps) {
 
             <article className="overflow-hidden rounded-[18px] border border-[var(--border)] bg-[var(--surface)]">
                 <div className="relative h-[120px]">
-                    <img
+                    <Image
                         src={booking.event.imageUrl}
                         alt={booking.event.title}
-                        className="h-full w-full object-cover"
+                        fill
+                        className="object-cover"
                     />
 
                     <div className="absolute inset-0 bg-[linear-gradient(to_top,var(--surface),transparent_70%)]" />

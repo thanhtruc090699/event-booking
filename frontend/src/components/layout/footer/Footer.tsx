@@ -17,11 +17,7 @@ const accountLinks = [
 
 
 
-const legalLinks = [
-    { label: "Terms", href: "/terms" },
-    { label: "Privacy Policy", href: "/privacy" },
-    { label: "Contact", href: "/contact" },
-];
+
 
 function FooterLink({
     href,

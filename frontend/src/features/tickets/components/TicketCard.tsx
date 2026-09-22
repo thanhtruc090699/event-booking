@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { cn } from "@/lib/cn";
 
 type TicketStatus = "UPCOMING" | "USED" | "CANCELLED";
@@ -53,14 +54,17 @@ export function TicketCard({
             <span className="absolute right-[-10px] top-1/2 h-5 w-5 -translate-y-1/2 rounded-full border border-[var(--border)] bg-[var(--void)]" />
 
             <div className="flex items-center gap-4 px-6 py-[18px]">
-                <img
-                    src={eventImageUrl}
-                    alt={eventTitle}
-                    className={cn(
-                        "h-16 w-16 shrink-0 rounded-lg object-cover",
-                        status === "USED" && "grayscale"
-                    )}
-                />
+                <div className={cn(
+                    "relative h-16 w-16 shrink-0 overflow-hidden rounded-lg",
+                    status === "USED" && "grayscale"
+                )}>
+                    <Image
+                        src={eventImageUrl}
+                        alt={eventTitle}
+                        fill
+                        className="object-cover"
+                    />
+                </div>
 
                 <div>
                     <span className={getStatusClass(status)}>

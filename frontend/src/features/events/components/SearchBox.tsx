@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/cn";
@@ -86,10 +87,18 @@ export function SearchBox({ initialQuery = "", className }: SearchBoxProps) {
     const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
     useEffect(() => {
-        setRecentSearches(getRecentSearches());
-        getEvents()
-            .then(data => setEvents(data))
-            .catch(console.error);
+        const loadInitialData = async () => {
+            try {
+                const recent = getRecentSearches();
+                setRecentSearches(recent);
+                const data = await getEvents();
+                setEvents(data);
+            } catch (error) {
+                console.error("Failed to load initial data:", error);
+            }
+        };
+        
+        loadInitialData();
     }, []);
 
     const matchingEvents = useMemo(() => {
@@ -227,11 +236,14 @@ export function SearchBox({ initialQuery = "", className }: SearchBoxProps) {
                                     }}
                                     className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left hover:bg-[var(--surface-hover)]"
                                 >
-                                    <img
-                                        src={event.imageUrl}
-                                        alt={event.title}
-                                        className="h-10 w-10 rounded-md object-cover"
-                                    />
+                                    <div className="relative h-10 w-10 overflow-hidden rounded-md">
+                                        <Image
+                                            src={event.imageUrl}
+                                            alt={event.title}
+                                            fill
+                                            className="object-cover"
+                                        />
+                                    </div>
 
                                     <div>
                                         <h4 className="text-sm font-semibold text-[var(--ink)]">

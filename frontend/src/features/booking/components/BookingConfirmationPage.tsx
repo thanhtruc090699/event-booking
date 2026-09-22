@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { PriceSummary } from "@/features/booking/components/PriceSummary";
@@ -90,10 +91,11 @@ export function BookingConfirmationPage() {
             </div>
 
             <div className="relative mb-[18px] h-[150px] overflow-hidden rounded-[14px]">
-                <img
+                <Image
                     src={booking.reservation.event.imageUrl}
                     alt={booking.reservation.event.title}
-                    className="h-full w-full object-cover"
+                    fill
+                    className="object-cover"
                 />
 
                 <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(10,10,12,0.9),transparent_70%)]" />

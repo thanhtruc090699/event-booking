@@ -22,12 +22,11 @@ export function TimerBanner({
     
     useEffect(() => {
         if (!expiresAt) {
-            setTimeLeft(time || "00:00");
             return;
         }
         
         function updateTimer() {
-            const expiryTime = new Date(expiresAt!).getTime();
+            const expiryTime = new Date(expiresAt).getTime();
             const now = Date.now();
             const diff = expiryTime - now;
             
@@ -47,7 +46,7 @@ export function TimerBanner({
         const interval = setInterval(updateTimer, 1000);
         
         return () => clearInterval(interval);
-    }, [expiresAt]);
+    }, [expiresAt, time]);
     
     return (
         <div

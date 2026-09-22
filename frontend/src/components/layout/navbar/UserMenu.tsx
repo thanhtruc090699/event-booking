@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { MeResponse } from "@/features/auth/api/authApi";
-import { avatarClass, roleBadgeClass } from "./navbar.styles";
+import { avatarClass } from "./navbar.styles";
 
 type UserMenuProps = {
     user: MeResponse | null;

@@ -33,20 +33,23 @@ export function MyTicketsPage() {
     const { accessToken, isAuthenticated } = useAuth();
 
     useEffect(() => {
-        if (!accessToken) {
-            setLoading(false);
-            return;
-        }
+        const loadBookings = async () => {
+            try {
+                if (!accessToken) {
+                    setLoading(false);
+                    return;
+                }
 
-        getCustomerBookings(accessToken)
-            .then(data => {
+                const data = await getCustomerBookings(accessToken);
                 setBookings(data);
-                setLoading(false);
-            })
-            .catch(err => {
+            } catch (err) {
                 console.error("Failed to fetch bookings:", err);
+            } finally {
                 setLoading(false);
-            });
+            }
+        };
+
+        loadBookings();
     }, [accessToken]);
 
     const tickets = bookings.map(booking => ({
