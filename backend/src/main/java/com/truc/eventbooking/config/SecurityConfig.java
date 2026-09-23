@@ -48,7 +48,8 @@ public class SecurityConfig {
                 new CorsConfiguration();
 
         configuration.setAllowedOrigins(
-                List.of("http://localhost:3000")
+                List.of("http://localhost:3000",
+                        "https://event-booking-frontend-snowy.vercel.app")
         );
 
         configuration.setAllowedMethods(
