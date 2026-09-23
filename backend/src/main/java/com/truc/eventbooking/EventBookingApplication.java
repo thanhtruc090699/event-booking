@@ -16,13 +16,14 @@ public class EventBookingApplication {
 		Dotenv dotenv = Dotenv.configure()
 				.directory(".")
 				.filename(".env")
+				.ignoreIfMissing()
 				.load();
 
-		dotenv.entries().forEach(entry ->
-				System.setProperty(entry.getKey(), entry.getValue())
-		);
-
-		System.out.println("JWT_SECRET loaded = "
-				+ (System.getProperty("JWT_SECRET") != null));
+		dotenv.entries().forEach(entry -> {
+			// Render/system environment variables take priority.
+			if (System.getenv(entry.getKey()) == null) {
+				System.setProperty(entry.getKey(), entry.getValue());
+			}
+		});
 	}
 }
