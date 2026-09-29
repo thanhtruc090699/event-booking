@@ -1,11 +1,38 @@
 reservations:
+  get:
+    tags:
+      - Reservations
+    summary: List all reservations
+    operationId: getAllReservations
+    security:
+      - bearerAuth: []
+    description: >
+      Returns every reservation across all customers. Only the first seat of each
+      reservation is included. Requires authentication, but any authenticated
+      customer can read every reservation in the system.
+    responses:
+      "200":
+        description: All reservations
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "../components/schema/reservation.yaml#/ReservationResponse"
+      "401":
+        description: Missing or invalid access token
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+
   post:
     tags:
       - Reservations
     summary: Create a seat reservation
+    operationId: createReservation
     security:
       - bearerAuth: []
-    operationId: createReservation
     requestBody:
       required: true
       content:
@@ -14,26 +41,97 @@ reservations:
             $ref: "../components/schema/reservation.yaml#/CreateReservationRequest"
     responses:
       "201":
-        description: Reservation created
+        description: Reservation created, seats held for 10 minutes
         content:
           application/json:
             schema:
-              $ref: "../components/schema/reservation.yaml#/ReservationResponse"
-      "409":
-        description: Seat is not available
+              $ref: "../components/schema/reservation.yaml#/ReservationSummaryResponse"
+      "400":
+        description: Validation failed or seatIds is empty
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+            example:
+              code: VALIDATION_ERROR
+              message: At least one seat must be selected
+      "401":
+        description: Missing or invalid access token
         content:
           application/json:
             schema:
               $ref: "../components/schema/error.yaml#/ErrorResponse"
       "404":
-        description: Seat not found
+        description: Customer or seat not found
         content:
           application/json:
             schema:
               $ref: "../components/schema/error.yaml#/ErrorResponse"
-      "400":
-        description: Invalid request
+      "409":
+        description: >
+          Seat is not available, or the seats span more than one event. In both
+          cases no seat is held, because the service runs in a single transaction.
         content:
           application/json:
             schema:
               $ref: "../components/schema/error.yaml#/ErrorResponse"
+            examples:
+              seatNotAvailable:
+                value:
+                  code: SEAT_NOT_AVAILABLE
+                  message: This seat is no longer available
+              multipleEvents:
+                value:
+                  code: SEATS_SPAN_MULTIPLE_EVENTS
+                  message: All seats in a reservation must belong to the same event
+
+reservationById:
+  get:
+    tags:
+      - Reservations
+    summary: Get a reservation
+    operationId: getReservationById
+    security:
+      - bearerAuth: []
+    description: >
+      Only the owner of the reservation may read it, otherwise 409 NOT_OWNER is
+      returned.
+    parameters:
+      - name: reservationId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 5001
+    responses:
+      "200":
+        description: Reservation detail
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/reservation.yaml#/ReservationSummaryResponse"
+      "401":
+        description: Missing or invalid access token
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+      "403":
+        description: Reservation belongs to another customer
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+            example:
+              code: NOT_OWNER
+              message: You don't own this reservation
+      "404":
+        description: Reservation not found
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+            example:
+              code: RESERVATION_NOT_FOUND
+              message: Reservation not found

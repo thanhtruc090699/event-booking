@@ -1,14 +1,14 @@
 EventSeatResponse:
   type: object
   required:
-    - eventSeatId
+    - id
     - section
     - rowLabel
     - seatNumber
     - price
     - status
   properties:
-    eventSeatId:
+    id:
       type: integer
       format: int64
       example: 1001
@@ -23,7 +23,6 @@ EventSeatResponse:
       example: "12"
     price:
       type: number
-      format: double
       example: 49.99
     status:
       type: string

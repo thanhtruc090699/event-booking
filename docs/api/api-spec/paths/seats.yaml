@@ -2,8 +2,11 @@ eventSeats:
   get:
     tags:
       - Seats
-    summary: Get seats for an event
+    summary: Get all seats of an event
     operationId: getEventSeats
+    description: >
+      Returns every seat with its live status. There is no filter for
+      availability only.
     parameters:
       - name: eventId
         in: path
@@ -21,8 +24,8 @@ eventSeats:
               type: array
               items:
                 $ref: "../components/schema/seat.yaml#/EventSeatResponse"
-      "404":
-        description: Event not found
+      "400":
+        description: eventId is not a number
         content:
           application/json:
             schema:

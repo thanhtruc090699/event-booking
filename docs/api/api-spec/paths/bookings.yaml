@@ -2,24 +2,39 @@ bookings:
   get:
     tags:
       - Bookings
-    summary: Get all the bookings
-    operationId: getBookings
+    summary: List all bookings
+    operationId: getAllBookings
+    security:
+      - bearerAuth: []
+    description: >
+      Returns every booking across all customers. Requires authentication, but any
+      authenticated customer can read every booking in the system.
     responses:
       "200":
-        description: All successful bookings
+        description: All bookings
         content:
           application/json:
             schema:
               type: array
               items:
                 $ref: "../components/schema/booking.yaml#/BookingResponse"
+      "401":
+        description: Missing or invalid access token
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+
   post:
     tags:
       - Bookings
-    summary: Confirm booking from reservation
+    summary: Confirm a booking from a paid reservation
+    operationId: createBooking
     security:
       - bearerAuth: []
-    operationId: createBooking
+    description: >
+      The linked payment must already be COMPLETED. On success the reservation is
+      marked CONFIRMED and its seats become BOOKED.
     requestBody:
       required: true
       content:
@@ -32,31 +47,64 @@ bookings:
         content:
           application/json:
             schema:
-              $ref: "../components/schema/booking.yaml#/BookingResponse"
-      "409":
-        description: Reservation cannot be confirmed
-        content:
-          application/json:
-            schema:
-              $ref: "../components/schema/error.yaml#/ErrorResponse"
+              $ref: "../components/schema/booking.yaml#/BookingDetailsDto"
       "400":
-        description: Invalid booking request
+        description: Validation failed
         content:
           application/json:
             schema:
               $ref: "../components/schema/error.yaml#/ErrorResponse"
+      "401":
+        description: Missing or invalid access token
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+      "403":
+        description: Reservation belongs to another customer
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+            example:
+              code: RESERVATION_ACCESS_DENIED
+              message: You are not allowed to book this reservation
       "404":
         description: Reservation not found
         content:
           application/json:
             schema:
               $ref: "../components/schema/error.yaml#/ErrorResponse"
+      "409":
+        description: >
+          Reservation missing, no payment, payment not completed, payment linked
+          to a different reservation, or reservation expired or not active.
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+            examples:
+              reservationMissing:
+                value:
+                  code: RESERVATION_NOT_FOUND
+                  message: Reservation not found
+              paymentNotCompleted:
+                value:
+                  code: PAYMENT_NOT_COMPLETED
+                  message: Payment has not been completed
+              reservationExpired:
+                value:
+                  code: RESERVATION_EXPIRED
+                  message: Reservation is expired
+
 bookingById:
   get:
     tags:
-      - Booking
-    summary: get detailed booking by its id
+      - Bookings
+    summary: Get a booking by its id
     operationId: getBookingById
+    security:
+      - bearerAuth: []
     parameters:
       - name: bookingId
         in: path
@@ -64,17 +112,124 @@ bookingById:
         schema:
           type: integer
           format: int64
-        example: 1
+        example: 9001
     responses:
       "200":
-        description: get booking by its id
+        description: Booking detail
         content:
           application/json:
             schema:
-              $ref: "../components/schema/booking.yaml#/BookingResponse"
+              $ref: "../components/schema/booking.yaml#/BookingDetailsDto"
+      "401":
+        description: Missing or invalid access token
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+      "403":
+        description: Booking belongs to another customer
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+            example:
+              code: BOOKING_ACCESS_DENIED
+              message: You are not allowed to view this booking
       "404":
         description: Booking not found
         content:
           application/json:
             schema:
               $ref: "../components/schema/error.yaml#/ErrorResponse"
+            example:
+              code: BOOKING_NOT_FOUND
+              message: Booking not found
+      "409":
+        description: No payment linked to the booking
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+            example:
+              code: PAYMENT_NOT_FOUND
+              message: Payment not found
+
+customerBookings:
+  get:
+    tags:
+      - Bookings
+    summary: List the current customer's bookings
+    operationId: getMyBookings
+    security:
+      - bearerAuth: []
+    description: Newest first, ordered by booking creation time descending.
+    responses:
+      "200":
+        description: Bookings owned by the current customer
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "../components/schema/booking.yaml#/CustomerBookingDto"
+      "401":
+        description: Missing or invalid access token
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+      "404":
+        description: Customer not found
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+
+ticketByCode:
+  get:
+    tags:
+      - Bookings
+    summary: Get a booking by its ticket code
+    operationId: getTicketByCode
+    security:
+      - bearerAuth: []
+    description: >
+      Accepts either the TCK... ticket code or a legacy numeric booking id.
+    parameters:
+      - name: ticketCode
+        in: path
+        required: true
+        schema:
+          type: string
+        example: TCK20260920A1B2C3
+    responses:
+      "200":
+        description: Ticket detail
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/booking.yaml#/CustomerBookingDto"
+      "401":
+        description: Missing or invalid access token
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+      "403":
+        description: Ticket belongs to another customer
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+            example:
+              code: TICKET_ACCESS_DENIED
+              message: You are not allowed to view this ticket
+      "404":
+        description: Ticket not found
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+            example:
+              code: BOOKING_NOT_FOUND
+              message: Ticket not found

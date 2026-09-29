@@ -5,27 +5,58 @@ info:
   version: 0.1.0
   description: >
     API contract for a Spring Boot event booking backend.
-    The MvP supports event browsing, seat availability, seat reservation,
-    and booking confirmation
+    Covers event browsing, seat availability, seat reservation, payment and
+    booking confirmation.
+    This document is kept in sync with the @RestController classes under
+    backend/src/main/java and with SecurityConfig. Everything under
+    /api/reservations, /api/payments and /api/bookings requires a bearer token;
+    /api/auth/**, /health and the event read endpoints are public; anything else
+    is denied.
   license:
     name: MIT
+
 servers:
   - url: http://localhost:8080
     description: Local development server
 
 tags:
+  - name: Health
+    description: Service liveness
+  - name: Auth
+    description: Authentication and authorization APIs
   - name: Events
     description: Event browsing APIs
   - name: Seats
     description: Event seat availability APIs
   - name: Reservations
     description: Seat reservation APIs
+  - name: Payments
+    description: Payment order APIs
   - name: Bookings
     description: Booking confirmation APIs
-  - name: Auth
-    description: Authentication and authorization APIs
 
 paths:
+  /health:
+    $ref: "./paths/health.yaml#/health"
+
+  /api/auth/register:
+    $ref: "./paths/auth.yaml#/register"
+
+  /api/auth/login:
+    $ref: "./paths/auth.yaml#/login"
+
+  /api/auth/social:
+    $ref: "./paths/auth.yaml#/socialLogin"
+
+  /api/auth/refresh:
+    $ref: "./paths/auth.yaml#/refreshAccessToken"
+
+  /api/auth/me:
+    $ref: "./paths/auth.yaml#/getCurrentUser"
+
+  /api/auth/logout:
+    $ref: "./paths/auth.yaml#/logout"
+
   /api/events:
     $ref: "./paths/events.yaml#/events"
 
@@ -38,17 +69,26 @@ paths:
   /api/reservations:
     $ref: "./paths/reservations.yaml#/reservations"
 
+  /api/reservations/{reservationId}:
+    $ref: "./paths/reservations.yaml#/reservationById"
+
+  /api/payments/orders:
+    $ref: "./paths/payments.yaml#/paymentOrders"
+
+  /api/payments/{paymentId}/capture:
+    $ref: "./paths/payments.yaml#/capturePayment"
+
   /api/bookings:
     $ref: "./paths/bookings.yaml#/bookings"
 
   /api/bookings/{bookingId}:
     $ref: "./paths/bookings.yaml#/bookingById"
 
-  /api/auth/register:
-    $ref: "./paths/auth.yaml#/register"
+  /api/bookings/customer/me:
+    $ref: "./paths/bookings.yaml#/customerBookings"
 
-  /api/auth/login:
-    $ref: "./paths/auth.yaml#/login"
+  /api/bookings/ticket/{ticketCode}:
+    $ref: "./paths/bookings.yaml#/ticketByCode"
 
 components:
   securitySchemes:
@@ -56,6 +96,5 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+
 security: []
-
-

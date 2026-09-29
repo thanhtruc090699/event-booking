@@ -2,17 +2,21 @@ events:
   get:
     tags:
       - Events
-    summary: Get published events
+    summary: List all events
     operationId: getEvents
+    description: >
+      Returns every event, including past ones. There is currently no filtering
+      or pagination, and no published/draft state on the event.
     responses:
       "200":
-        description: Published events
+        description: All events
         content:
           application/json:
             schema:
               type: array
               items:
                 $ref: "../components/schema/event.yaml#/EventSummaryResponse"
+
 eventById:
   get:
     tags:
@@ -40,9 +44,6 @@ eventById:
           application/json:
             schema:
               $ref: "../components/schema/error.yaml#/ErrorResponse"
-      "400":
-        description: Invalid request
-        content:
-          application/json:
-            schema:
-              $ref: "../components/schema/error.yaml#/ErrorResponse"
+            example:
+              code: EVENT_NOT_FOUND
+              message: Event not found

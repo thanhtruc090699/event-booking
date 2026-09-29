@@ -3,7 +3,7 @@ info:
   title: Event Booking Platform API
   version: 0.1.0
   description: |
-    API contract for a Spring Boot event booking backend. The MvP supports event browsing, seat availability, seat reservation, and booking confirmation
+    API contract for a Spring Boot event booking backend. Covers event browsing, seat availability, seat reservation, payment and booking confirmation. This document is kept in sync with the @RestController classes under backend/src/main/java and with SecurityConfig. Everything under /api/reservations, /api/payments and /api/bookings requires a bearer token; /api/auth/**, /health and the event read endpoints are public; anything else is denied.
   license:
     name: MIT
 servers:
@@ -11,26 +11,226 @@ servers:
     description: Local development server
 security: []
 tags:
+  - name: Health
+    description: Service liveness
+  - name: Auth
+    description: Authentication and authorization APIs
   - name: Events
     description: Event browsing APIs
   - name: Seats
     description: Event seat availability APIs
   - name: Reservations
     description: Seat reservation APIs
+  - name: Payments
+    description: Payment order APIs
   - name: Bookings
     description: Booking confirmation APIs
-  - name: Auth
-    description: Authentication and authorization APIs
 paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Liveness probe
+      operationId: health
+      description: Returns a plain text body, not JSON. Does not touch the database.
+      responses:
+        '200':
+          description: Service is up
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: OK
+  /api/auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Register an account
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Account created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: VALIDATION_ERROR
+                message: Password must contain at least 8 characters
+        '409':
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Log in with email and password
+      operationId: logIn
+      description: |
+        The refresh token is not returned in the body. It is set as an httpOnly cookie named refreshToken, scoped to /api/auth/refresh.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Successfully logged in
+          headers:
+            Set-Cookie:
+              description: refreshToken httpOnly cookie, Max-Age 604800, Path=/api/auth/refresh
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/auth/social:
+    post:
+      tags:
+        - Auth
+      summary: Log in with a social provider ID token
+      operationId: socialLogin
+      description: |
+        Verifies the Google ID token then issues the same tokens as /api/auth/login. The refresh token is delivered via the httpOnly cookie.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SocialLoginRequest'
+      responses:
+        '200':
+          description: Successfully logged in
+          headers:
+            Set-Cookie:
+              description: refreshToken httpOnly cookie, Max-Age 604800, Path=/api/auth/refresh
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Provider token rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/auth/refresh:
+    post:
+      tags:
+        - Auth
+      summary: Issue a new access token
+      operationId: refreshAccessToken
+      description: |
+        Reads the refresh token from the httpOnly cookie rather than the request body.
+      parameters:
+        - name: refreshToken
+          in: cookie
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: New access token issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshTokenResponse'
+        '403':
+          description: Refresh token missing, expired or invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: MISSING_REFRESH_TOKEN
+                message: Refresh token is missing
+  /api/auth/me:
+    get:
+      tags:
+        - Auth
+      summary: Get the authenticated customer
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current customer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeResponse'
+        '403':
+          description: Missing, malformed or invalid Authorization header
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: AUTH_REQUIRED
+                message: Missing or invalid Authorization header
+  /api/auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: Log out
+      operationId: logout
+      description: Clears the refreshToken cookie by setting Max-Age to 0.
+      responses:
+        '204':
+          description: Logged out
+          headers:
+            Set-Cookie:
+              description: refreshToken cookie with empty value and Max-Age 0
+              schema:
+                type: string
   /api/events:
     get:
       tags:
         - Events
-      summary: Get published events
+      summary: List all events
       operationId: getEvents
+      description: |
+        Returns every event, including past ones. There is currently no filtering or pagination, and no published/draft state on the event.
       responses:
         '200':
-          description: Published events
+          description: All events
           content:
             application/json:
               schema:
@@ -58,24 +258,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EventDetailResponse'
-        '400':
-          description: Invalid request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Event not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: EVENT_NOT_FOUND
+                message: Event not found
   /api/events/{eventId}/seats:
     get:
       tags:
         - Seats
-      summary: Get seats for an event
+      summary: Get all seats of an event
       operationId: getEventSeats
+      description: |
+        Returns every seat with its live status. There is no filter for availability only.
       parameters:
         - name: eventId
           in: path
@@ -93,20 +292,44 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/EventSeatResponse'
-        '404':
-          description: Event not found
+        '400':
+          description: eventId is not a number
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
   /api/reservations:
+    get:
+      tags:
+        - Reservations
+      summary: List all reservations
+      operationId: getAllReservations
+      security:
+        - bearerAuth: []
+      description: |
+        Returns every reservation across all customers. Only the first seat of each reservation is included. Requires authentication, but any authenticated customer can read every reservation in the system.
+      responses:
+        '200':
+          description: All reservations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReservationResponse'
+        '401':
+          description: Missing or invalid access token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     post:
       tags:
         - Reservations
       summary: Create a seat reservation
+      operationId: createReservation
       security:
         - bearerAuth: []
-      operationId: createReservation
       requestBody:
         required: true
         content:
@@ -115,25 +338,183 @@ paths:
               $ref: '#/components/schemas/CreateReservationRequest'
       responses:
         '201':
-          description: Reservation created
+          description: Reservation created, seats held for 10 minutes
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReservationResponse'
+                $ref: '#/components/schemas/ReservationSummaryResponse'
         '400':
-          description: Invalid request
+          description: Validation failed or seatIds is empty
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: VALIDATION_ERROR
+                message: At least one seat must be selected
+        '401':
+          description: Missing or invalid access token
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: Seat not found
+          description: Customer or seat not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '409':
-          description: Seat is not available
+          description: |
+            Seat is not available, or the seats span more than one event. In both cases no seat is held, because the service runs in a single transaction.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                seatNotAvailable:
+                  value:
+                    code: SEAT_NOT_AVAILABLE
+                    message: This seat is no longer available
+                multipleEvents:
+                  value:
+                    code: SEATS_SPAN_MULTIPLE_EVENTS
+                    message: All seats in a reservation must belong to the same event
+  /api/reservations/{reservationId}:
+    get:
+      tags:
+        - Reservations
+      summary: Get a reservation
+      operationId: getReservationById
+      security:
+        - bearerAuth: []
+      description: |
+        Only the owner of the reservation may read it, otherwise 409 NOT_OWNER is returned.
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          example: 5001
+      responses:
+        '200':
+          description: Reservation detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationSummaryResponse'
+        '401':
+          description: Missing or invalid access token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Reservation belongs to another customer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: NOT_OWNER
+                message: You don't own this reservation
+        '404':
+          description: Reservation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: RESERVATION_NOT_FOUND
+                message: Reservation not found
+  /api/payments/orders:
+    post:
+      tags:
+        - Payments
+      summary: Create a payment order for a reservation
+      operationId: createPaymentOrder
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePaymentRequest'
+      responses:
+        '200':
+          description: Payment order created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentOrderResponse'
+        '400':
+          description: Malformed request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Missing or invalid access token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Reservation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Reservation is not active or a payment already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/payments/{paymentId}/capture:
+    post:
+      tags:
+        - Payments
+      summary: Capture an approved payment
+      operationId: capturePayment
+      security:
+        - bearerAuth: []
+      description: |
+        Called after the customer approves the payment in the provider UI. Marks the payment COMPLETED so that POST /api/bookings can confirm the booking.
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          example: 7001
+      responses:
+        '200':
+          description: Payment captured
+        '401':
+          description: Missing or invalid access token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Payment belongs to another customer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Payment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Payment is not in a capturable state
           content:
             application/json:
               schema:
@@ -142,24 +523,36 @@ paths:
     get:
       tags:
         - Bookings
-      summary: Get all the bookings
-      operationId: getBookings
+      summary: List all bookings
+      operationId: getAllBookings
+      security:
+        - bearerAuth: []
+      description: |
+        Returns every booking across all customers. Requires authentication, but any authenticated customer can read every booking in the system.
       responses:
         '200':
-          description: All successful bookings
+          description: All bookings
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/BookingResponse'
+        '401':
+          description: Missing or invalid access token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     post:
       tags:
         - Bookings
-      summary: Confirm booking from reservation
+      summary: Confirm a booking from a paid reservation
+      operationId: createBooking
       security:
         - bearerAuth: []
-      operationId: createBooking
+      description: |
+        The linked payment must already be COMPLETED. On success the reservation is marked CONFIRMED and its seats become BOOKED.
       requestBody:
         required: true
         content:
@@ -172,13 +565,28 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BookingResponse'
+                $ref: '#/components/schemas/BookingDetailsDto'
         '400':
-          description: Invalid booking request
+          description: Validation failed
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Missing or invalid access token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Reservation belongs to another customer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: RESERVATION_ACCESS_DENIED
+                message: You are not allowed to book this reservation
         '404':
           description: Reservation not found
           content:
@@ -186,17 +594,33 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '409':
-          description: Reservation cannot be confirmed
+          description: |
+            Reservation missing, no payment, payment not completed, payment linked to a different reservation, or reservation expired or not active.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                reservationMissing:
+                  value:
+                    code: RESERVATION_NOT_FOUND
+                    message: Reservation not found
+                paymentNotCompleted:
+                  value:
+                    code: PAYMENT_NOT_COMPLETED
+                    message: Payment has not been completed
+                reservationExpired:
+                  value:
+                    code: RESERVATION_EXPIRED
+                    message: Reservation is expired
   /api/bookings/{bookingId}:
     get:
       tags:
-        - Booking
-      summary: get detailed booking by its id
+        - Bookings
+      summary: Get a booking by its id
       operationId: getBookingById
+      security:
+        - bearerAuth: []
       parameters:
         - name: bookingId
           in: path
@@ -204,75 +628,125 @@ paths:
           schema:
             type: integer
             format: int64
-          example: 1
+          example: 9001
       responses:
         '200':
-          description: get booking by its id
+          description: Booking detail
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BookingResponse'
+                $ref: '#/components/schemas/BookingDetailsDto'
+        '401':
+          description: Missing or invalid access token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Booking belongs to another customer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: BOOKING_ACCESS_DENIED
+                message: You are not allowed to view this booking
         '404':
           description: Booking not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /api/auth/register:
-    post:
-      tags:
-        - Auth
-      summary: Register an account
-      operationId: register
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RegisterRequest'
-      responses:
-        '201':
-          description: Successfully Register
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RegisterResponse'
-        '400':
-          description: Invalid Register Request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: BOOKING_NOT_FOUND
+                message: Booking not found
         '409':
-          description: Email already exists
+          description: No payment linked to the booking
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /api/auth/login:
-    post:
+              example:
+                code: PAYMENT_NOT_FOUND
+                message: Payment not found
+  /api/bookings/customer/me:
+    get:
       tags:
-        - Auth
-      summary: Log in
-      operationId: LogIn
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LoginRequest'
+        - Bookings
+      summary: List the current customer's bookings
+      operationId: getMyBookings
+      security:
+        - bearerAuth: []
+      description: Newest first, ordered by booking creation time descending.
       responses:
         '200':
-          description: Successfully log in
+          description: Bookings owned by the current customer
           content:
-            application/jon:
+            application/json:
               schema:
-                $ref: '#/components/schemas/LoginResponse'
-        '400':
-          description: Invalid Login Request
+                type: array
+                items:
+                  $ref: '#/components/schemas/CustomerBookingDto'
+        '401':
+          description: Missing or invalid access token
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Customer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/bookings/ticket/{ticketCode}:
+    get:
+      tags:
+        - Bookings
+      summary: Get a booking by its ticket code
+      operationId: getTicketByCode
+      security:
+        - bearerAuth: []
+      description: |
+        Accepts either the TCK... ticket code or a legacy numeric booking id.
+      parameters:
+        - name: ticketCode
+          in: path
+          required: true
+          schema:
+            type: string
+          example: TCK20260920A1B2C3
+      responses:
+        '200':
+          description: Ticket detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerBookingDto'
+        '401':
+          description: Missing or invalid access token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Ticket belongs to another customer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: TICKET_ACCESS_DENIED
+                message: You are not allowed to view this ticket
+        '404':
+          description: Ticket not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: BOOKING_NOT_FOUND
+                message: Ticket not found
 components:
   securitySchemes:
     bearerAuth:
@@ -280,54 +754,45 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
-    EventSummaryResponse:
+    RegisterRequest:
       type: object
       required:
-        - id
-        - name
-        - venueName
-        - startTime
+        - email
+        - password
+        - fullName
       properties:
-        id:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          minLength: 8
+          description: |
+            At least 8 characters, at least one uppercase letter and at least one special character.
+          example: Passw0rd!
+        fullName:
+          type: string
+          example: Jane Doe
+    RegisterResponse:
+      type: object
+      required:
+        - customerId
+        - email
+        - fullName
+      properties:
+        customerId:
           type: integer
           format: int64
           example: 1
-        name:
+        email:
           type: string
-          example: Rock concert Berlin
-        venueName:
+          format: email
+          example: user@example.com
+        fullName:
           type: string
-          example: Berlin Arena
-        startTime:
-          type: string
-          format: date-time
-          example: '2026-09-20T19:00:00'
-    EventDetailResponse:
-      type: object
-      required:
-        - id
-        - name
-        - description
-        - venueName
-        - startTime
-      properties:
-        id:
-          type: integer
-          format: int64
-          example: 1
-        name:
-          type: string
-          example: Rock Concert Berlin
-        description:
-          type: string
-          example: Live concert in Berlin
-        venueName:
-          type: string
-          example: Berlin Arena
-        startTime:
-          type: string
-          format: date-time
-          example: '2026-09-20T19:00:00'
+          example: Jane Doe
     ErrorResponse:
       type: object
       required:
@@ -340,17 +805,192 @@ components:
         message:
           type: string
           example: This seat is no longer available
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          example: Passw0rd!
+    LoginResponse:
+      type: object
+      required:
+        - accessToken
+        - tokenType
+        - accessTokenExpiresIn
+        - refreshTokenExpiresIn
+      properties:
+        accessToken:
+          type: string
+          description: JWT to be sent in the Authorization header.
+        refreshToken:
+          type: string
+          nullable: true
+          description: |
+            Always null in the response body. The refresh token is delivered as an httpOnly cookie scoped to /api/auth/refresh.
+        tokenType:
+          type: string
+          example: Bearer
+        accessTokenExpiresIn:
+          type: integer
+          format: int64
+          description: Access token lifetime in seconds.
+          example: 900
+        refreshTokenExpiresIn:
+          type: integer
+          format: int64
+          description: |
+            Always 0 in the response body. The real lifetime is 7 days and is carried by the refreshToken cookie Max-Age.
+          example: 0
+    SocialLoginRequest:
+      type: object
+      required:
+        - provider
+        - token
+      properties:
+        provider:
+          type: string
+          enum:
+            - google
+          example: google
+        token:
+          type: string
+          description: ID token (credential) issued by the provider.
+          example: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...
+    RefreshTokenResponse:
+      type: object
+      required:
+        - accessToken
+      properties:
+        accessToken:
+          type: string
+          description: Newly issued JWT.
+    MeResponse:
+      type: object
+      required:
+        - customerId
+        - email
+        - fullName
+      properties:
+        customerId:
+          type: integer
+          format: int64
+          example: 1
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        fullName:
+          type: string
+          example: Jane Doe
+    EventSummaryResponse:
+      type: object
+      required:
+        - id
+        - title
+        - venue
+        - city
+        - startDate
+        - imageUrl
+        - category
+        - hot
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        title:
+          type: string
+          example: Rock Concert Berlin
+        venue:
+          type: string
+          example: Berlin Arena
+        city:
+          type: string
+          example: Berlin
+        startDate:
+          type: string
+          format: date-time
+          description: Offset date-time, serialised with ISO_OFFSET_DATE_TIME.
+          example: '2026-09-20T19:00:00Z'
+        imageUrl:
+          type: string
+          format: uri
+          example: https://picsum.photos/seed/event-1/480/270
+        category:
+          type: string
+          example: Concert
+        hot:
+          type: boolean
+          example: true
+    EventDetailResponse:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - venue
+        - city
+        - imageUrl
+        - category
+        - startDate
+        - startingPrice
+        - availableSeats
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        title:
+          type: string
+          example: Rock Concert Berlin
+        description:
+          type: string
+          example: Live concert in Berlin
+        venue:
+          type: string
+          example: Berlin Arena
+        city:
+          type: string
+          example: Berlin
+        imageUrl:
+          type: string
+          format: uri
+          example: https://picsum.photos/seed/event-1/480/270
+        category:
+          type: string
+          example: Concert
+        startDate:
+          type: string
+          format: date-time
+          description: Offset date-time, serialised with ISO_OFFSET_DATE_TIME.
+          example: '2026-09-20T19:00:00Z'
+        startingPrice:
+          type: number
+          description: Cheapest seat currently in AVAILABLE status. 0 when the event has no free seats.
+          example: 49.99
+        availableSeats:
+          type: integer
+          description: Number of seats in AVAILABLE status.
+          example: 50
     EventSeatResponse:
       type: object
       required:
-        - eventSeatId
+        - id
         - section
         - rowLabel
         - seatNumber
         - price
         - status
       properties:
-        eventSeatId:
+        id:
           type: integer
           format: int64
           example: 1001
@@ -365,7 +1005,6 @@ components:
           example: '12'
         price:
           type: number
-          format: double
           example: 49.99
         status:
           type: string
@@ -374,23 +1013,13 @@ components:
             - RESERVED
             - BOOKED
           example: AVAILABLE
-    CreateReservationRequest:
-      type: object
-      required:
-        - eventSeatId
-        - customerId
-      properties:
-        eventSeatId:
-          type: integer
-          format: int64
-          example: 1001
     ReservationResponse:
       type: object
       required:
         - reservationId
         - eventSeatId
         - customerId
-        - status
+        - reservationStatus
         - expiresAt
       properties:
         reservationId:
@@ -400,8 +1029,113 @@ components:
         eventSeatId:
           type: integer
           format: int64
+          description: |
+            First seat of the reservation only. The service intentionally returns a single seat for backward compatibility.
           example: 1001
         customerId:
+          type: integer
+          format: int64
+          example: 1
+        reservationStatus:
+          type: string
+          enum:
+            - ACTIVE
+            - CANCELLED
+            - EXPIRED
+            - CONFIRMED
+          example: ACTIVE
+        expiresAt:
+          type: string
+          format: date-time
+          description: Seats are held for 10 minutes from creation.
+          example: '2026-09-20T18:05:00Z'
+    CreateReservationRequest:
+      type: object
+      required:
+        - seatIds
+      properties:
+        seatIds:
+          type: array
+          minItems: 1
+          description: |
+            Seat ids to hold. All seats must belong to the same event, otherwise the request is rejected with SEATS_SPAN_MULTIPLE_EVENTS and no seat is held.
+          items:
+            type: integer
+            format: int64
+          example:
+            - 1001
+            - 1002
+    ReservationEventInfo:
+      type: object
+      required:
+        - id
+        - title
+        - imageUrl
+        - venue
+        - city
+        - startDate
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        title:
+          type: string
+          example: Rock Concert Berlin
+        imageUrl:
+          type: string
+          format: uri
+          example: https://picsum.photos/seed/event-1/480/270
+        venue:
+          type: string
+          example: Berlin Arena
+        city:
+          type: string
+          example: Berlin
+        startDate:
+          type: string
+          format: date-time
+          example: '2026-09-20T19:00:00Z'
+    ReservationSeatInfo:
+      type: object
+      required:
+        - id
+        - section
+        - rowLabel
+        - seatNumber
+        - price
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1001
+        section:
+          type: string
+          example: A
+        rowLabel:
+          type: string
+          example: '1'
+        seatNumber:
+          type: string
+          example: '12'
+        price:
+          type: number
+          example: 49.99
+    ReservationSummaryResponse:
+      type: object
+      required:
+        - id
+        - eventId
+        - status
+        - expiresAt
+        - event
+        - selectedSeats
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 5001
+        eventId:
           type: integer
           format: int64
           example: 1
@@ -409,14 +1143,50 @@ components:
           type: string
           enum:
             - ACTIVE
-            - EXPIRED
             - CANCELLED
+            - EXPIRED
             - CONFIRMED
           example: ACTIVE
         expiresAt:
           type: string
           format: date-time
-          example: '2026-09-20T18:05:00'
+          example: '2026-09-20T18:05:00Z'
+        event:
+          $ref: '#/components/schemas/ReservationEventInfo'
+        selectedSeats:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReservationSeatInfo'
+    CreatePaymentRequest:
+      type: object
+      required:
+        - reservationId
+        - paymentProviderType
+      properties:
+        reservationId:
+          type: integer
+          format: int64
+          example: 5001
+        paymentProviderType:
+          type: string
+          enum:
+            - PAYPAL
+            - STRIPE
+          example: PAYPAL
+    PaymentOrderResponse:
+      type: object
+      required:
+        - paymentId
+        - providerOrderId
+      properties:
+        paymentId:
+          type: integer
+          format: int64
+          example: 7001
+        providerOrderId:
+          type: string
+          description: Order id returned by the payment provider.
+          example: 8XY12345ZZ
     BookingResponse:
       type: object
       required:
@@ -436,69 +1206,148 @@ components:
         status:
           type: string
           enum:
+            - PENDING
             - CONFIRMED
             - CANCELLED
             - FAILED
           example: CONFIRMED
         ticketCode:
           type: string
-          example: TCK-9001
+          pattern: ^TCK[0-9]{8}[A-Z0-9]{6}$
+          example: TCK20260920A1B2C3
     CreateBookingRequest:
       type: object
       required:
         - reservationId
-        - customerId
       properties:
         reservationId:
           type: integer
           format: int64
           example: 5001
-    RegisterRequest:
+        paymentMethod:
+          type: string
+          description: |
+            Free-form label echoed back on the booking details. The payment method is actually read from the linked payment, not from this field.
+          example: PAYPAL
+    BookingDetailsDto:
       type: object
       required:
-        - email
-        - password
-        - fullName
+        - id
+        - bookingReference
+        - status
+        - totalAmount
+        - createdAt
+        - paymentMethod
+        - reservation
       properties:
-        email:
-          type: string
-          format: email
-        password:
-          type: string
-          format: password
-        fullName:
-          type: string
-    RegisterResponse:
-      type: object
-      properties:
-        customerId:
+        id:
           type: integer
           format: int64
-        email:
+          example: 9001
+        bookingReference:
           type: string
-          format: email
-        fullName:
+          description: Same value as the ticket code.
+          example: TCK20260920A1B2C3
+        status:
           type: string
-    LoginRequest:
+          enum:
+            - PENDING
+            - CONFIRMED
+            - CANCELLED
+            - FAILED
+          example: CONFIRMED
+        totalAmount:
+          type: number
+          description: Sum of all reserved seat prices.
+          example: 99.98
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-09-20T18:00:00Z'
+        paymentMethod:
+          type: string
+          description: Name of the linked payment provider.
+          example: PAYPAL
+        reservation:
+          $ref: '#/components/schemas/ReservationSummaryResponse'
+    CustomerBookingEventSummary:
       type: object
       required:
-        - email
-        - password
+        - title
+        - imageUrl
+        - venue
+        - city
+        - startDate
       properties:
-        email:
+        title:
           type: string
-          format: email
-        password:
+          example: Rock Concert Berlin
+        imageUrl:
           type: string
-          format: password
-    LoginResponse:
+          format: uri
+          example: https://picsum.photos/seed/event-1/480/270
+        venue:
+          type: string
+          example: Berlin Arena
+        city:
+          type: string
+          example: Berlin
+        startDate:
+          type: string
+          format: date-time
+          example: '2026-09-20T19:00:00Z'
+    CustomerBookingSeatInfo:
       type: object
+      required:
+        - section
+        - rowLabel
+        - seatNumber
       properties:
-        accessToken:
+        section:
           type: string
-        tokenType:
+          example: A
+        rowLabel:
           type: string
-          example: Bearer
-        expiresIn:
+          example: '1'
+        seatNumber:
+          type: string
+          example: '12'
+    CustomerBookingDto:
+      type: object
+      required:
+        - id
+        - bookingReference
+        - status
+        - totalAmount
+        - createdAt
+        - event
+        - seat
+      properties:
+        id:
           type: integer
-          example: 3600
+          format: int64
+          example: 9001
+        bookingReference:
+          type: string
+          example: TCK20260920A1B2C3
+        status:
+          type: string
+          enum:
+            - PENDING
+            - CONFIRMED
+            - CANCELLED
+            - FAILED
+          example: CONFIRMED
+        totalAmount:
+          type: number
+          example: 99.98
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-09-20T18:00:00Z'
+        event:
+          $ref: '#/components/schemas/CustomerBookingEventSummary'
+        seat:
+          allOf:
+            - $ref: '#/components/schemas/CustomerBookingSeatInfo'
+          description: First seat of the reservation only.

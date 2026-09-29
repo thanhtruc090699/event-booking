@@ -1,0 +1,31 @@
+CreatePaymentRequest:
+  type: object
+  required:
+    - reservationId
+    - paymentProviderType
+  properties:
+    reservationId:
+      type: integer
+      format: int64
+      example: 5001
+    paymentProviderType:
+      type: string
+      enum:
+        - PAYPAL
+        - STRIPE
+      example: PAYPAL
+
+PaymentOrderResponse:
+  type: object
+  required:
+    - paymentId
+    - providerOrderId
+  properties:
+    paymentId:
+      type: integer
+      format: int64
+      example: 7001
+    providerOrderId:
+      type: string
+      description: Order id returned by the payment provider.
+      example: 8XY12345ZZ

@@ -8,23 +8,37 @@ RegisterRequest:
     email:
       type: string
       format: email
+      example: user@example.com
     password:
       type: string
       format: password
+      minLength: 8
+      description: >
+        At least 8 characters, at least one uppercase letter and at least one
+        special character.
+      example: Passw0rd!
     fullName:
       type: string
+      example: Jane Doe
 
 RegisterResponse:
   type: object
+  required:
+    - customerId
+    - email
+    - fullName
   properties:
     customerId:
       type: integer
       format: int64
+      example: 1
     email:
       type: string
       format: email
+      example: user@example.com
     fullName:
       type: string
+      example: Jane Doe
 
 LoginRequest:
   type: object
@@ -35,21 +49,85 @@ LoginRequest:
     email:
       type: string
       format: email
+      example: user@example.com
     password:
       type: string
       format: password
+      example: Passw0rd!
+
+SocialLoginRequest:
+  type: object
+  required:
+    - provider
+    - token
+  properties:
+    provider:
+      type: string
+      enum:
+        - google
+      example: google
+    token:
+      type: string
+      description: ID token (credential) issued by the provider.
+      example: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...
 
 LoginResponse:
   type: object
+  required:
+    - accessToken
+    - tokenType
+    - accessTokenExpiresIn
+    - refreshTokenExpiresIn
   properties:
     accessToken:
       type: string
+      description: JWT to be sent in the Authorization header.
+    refreshToken:
+      type: string
+      nullable: true
+      description: >
+        Always null in the response body. The refresh token is delivered as an
+        httpOnly cookie scoped to /api/auth/refresh.
     tokenType:
       type: string
-      example: "Bearer"
-    expiresIn:
+      example: Bearer
+    accessTokenExpiresIn:
       type: integer
-      example: 3600
+      format: int64
+      description: Access token lifetime in seconds.
+      example: 900
+    refreshTokenExpiresIn:
+      type: integer
+      format: int64
+      description: >
+        Always 0 in the response body. The real lifetime is 7 days and is
+        carried by the refreshToken cookie Max-Age.
+      example: 0
 
+RefreshTokenResponse:
+  type: object
+  required:
+    - accessToken
+  properties:
+    accessToken:
+      type: string
+      description: Newly issued JWT.
 
-
+MeResponse:
+  type: object
+  required:
+    - customerId
+    - email
+    - fullName
+  properties:
+    customerId:
+      type: integer
+      format: int64
+      example: 1
+    email:
+      type: string
+      format: email
+      example: user@example.com
+    fullName:
+      type: string
+      example: Jane Doe

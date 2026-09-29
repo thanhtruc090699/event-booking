@@ -1,0 +1,92 @@
+paymentOrders:
+  post:
+    tags:
+      - Payments
+    summary: Create a payment order for a reservation
+    operationId: createPaymentOrder
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schema/payment.yaml#/CreatePaymentRequest"
+    responses:
+      "200":
+        description: Payment order created
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/payment.yaml#/PaymentOrderResponse"
+      "400":
+        description: Malformed request body
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+      "401":
+        description: Missing or invalid access token
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+      "404":
+        description: Reservation not found
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+      "409":
+        description: Reservation is not active or a payment already exists
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+
+capturePayment:
+  post:
+    tags:
+      - Payments
+    summary: Capture an approved payment
+    operationId: capturePayment
+    security:
+      - bearerAuth: []
+    description: >
+      Called after the customer approves the payment in the provider UI. Marks the
+      payment COMPLETED so that POST /api/bookings can confirm the booking.
+    parameters:
+      - name: paymentId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+        example: 7001
+    responses:
+      "200":
+        description: Payment captured
+      "401":
+        description: Missing or invalid access token
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+      "403":
+        description: Payment belongs to another customer
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+      "404":
+        description: Payment not found
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+      "409":
+        description: Payment is not in a capturable state
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"

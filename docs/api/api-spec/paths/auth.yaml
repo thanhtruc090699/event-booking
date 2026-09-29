@@ -12,17 +12,20 @@ register:
             $ref: "../components/schema/auth.yaml#/RegisterRequest"
     responses:
       "201":
-        description: Successfully Register
+        description: Account created
         content:
           application/json:
             schema:
               $ref: "../components/schema/auth.yaml#/RegisterResponse"
       "400":
-        description: Invalid Register Request
+        description: Validation failed
         content:
           application/json:
             schema:
               $ref: "../components/schema/error.yaml#/ErrorResponse"
+            example:
+              code: VALIDATION_ERROR
+              message: "Password must contain at least 8 characters"
       "409":
         description: Email already exists
         content:
@@ -34,24 +37,150 @@ login:
   post:
     tags:
       - Auth
-    summary: Log in
-    operationId: LogIn
+    summary: Log in with email and password
+    operationId: logIn
+    description: >
+      The refresh token is not returned in the body. It is set as an httpOnly
+      cookie named refreshToken, scoped to /api/auth/refresh.
     requestBody:
+      required: true
       content:
         application/json:
           schema:
             $ref: "../components/schema/auth.yaml#/LoginRequest"
     responses:
       "200":
-        description: Successfully log in
+        description: Successfully logged in
+        headers:
+          Set-Cookie:
+            description: refreshToken httpOnly cookie, Max-Age 604800, Path=/api/auth/refresh
+            schema:
+              type: string
         content:
-          application/jon:
+          application/json:
             schema:
               $ref: "../components/schema/auth.yaml#/LoginResponse"
       "400":
-        description: Invalid Login Request
+        description: Validation failed
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+      "401":
+        description: Invalid credentials
         content:
           application/json:
             schema:
               $ref: "../components/schema/error.yaml#/ErrorResponse"
 
+socialLogin:
+  post:
+    tags:
+      - Auth
+    summary: Log in with a social provider ID token
+    operationId: socialLogin
+    description: >
+      Verifies the Google ID token then issues the same tokens as /api/auth/login.
+      The refresh token is delivered via the httpOnly cookie.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schema/auth.yaml#/SocialLoginRequest"
+    responses:
+      "200":
+        description: Successfully logged in
+        headers:
+          Set-Cookie:
+            description: refreshToken httpOnly cookie, Max-Age 604800, Path=/api/auth/refresh
+            schema:
+              type: string
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/auth.yaml#/LoginResponse"
+      "400":
+        description: Validation failed
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+      "401":
+        description: Provider token rejected
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+
+refreshAccessToken:
+  post:
+    tags:
+      - Auth
+    summary: Issue a new access token
+    operationId: refreshAccessToken
+    description: >
+      Reads the refresh token from the httpOnly cookie rather than the request body.
+    parameters:
+      - name: refreshToken
+        in: cookie
+        required: true
+        schema:
+          type: string
+    responses:
+      "200":
+        description: New access token issued
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/auth.yaml#/RefreshTokenResponse"
+      "403":
+        description: Refresh token missing, expired or invalid
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+            example:
+              code: MISSING_REFRESH_TOKEN
+              message: Refresh token is missing
+
+getCurrentUser:
+  get:
+    tags:
+      - Auth
+    summary: Get the authenticated customer
+    operationId: getCurrentUser
+    security:
+      - bearerAuth: []
+    responses:
+      "200":
+        description: Current customer
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/auth.yaml#/MeResponse"
+      "403":
+        description: Missing, malformed or invalid Authorization header
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+            example:
+              code: AUTH_REQUIRED
+              message: Missing or invalid Authorization header
+
+logout:
+  post:
+    tags:
+      - Auth
+    summary: Log out
+    operationId: logout
+    description: Clears the refreshToken cookie by setting Max-Age to 0.
+    responses:
+      "204":
+        description: Logged out
+        headers:
+          Set-Cookie:
+            description: refreshToken cookie with empty value and Max-Age 0
+            schema:
+              type: string

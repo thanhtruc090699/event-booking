@@ -2,47 +2,90 @@ EventSummaryResponse:
   type: object
   required:
     - id
-    - name
-    - venueName
-    - startTime
+    - title
+    - venue
+    - city
+    - startDate
+    - imageUrl
+    - category
+    - hot
   properties:
     id:
       type: integer
       format: int64
       example: 1
-    name:
+    title:
       type: string
-      example: Rock concert Berlin
-    venueName:
+      example: Rock Concert Berlin
+    venue:
       type: string
       example: Berlin Arena
-    startTime:
+    city:
+      type: string
+      example: Berlin
+    startDate:
       type: string
       format: date-time
-      example: "2026-09-20T19:00:00"
+      description: Offset date-time, serialised with ISO_OFFSET_DATE_TIME.
+      example: "2026-09-20T19:00:00Z"
+    imageUrl:
+      type: string
+      format: uri
+      example: https://picsum.photos/seed/event-1/480/270
+    category:
+      type: string
+      example: Concert
+    hot:
+      type: boolean
+      example: true
+
 EventDetailResponse:
   type: object
   required:
     - id
-    - name
+    - title
     - description
-    - venueName
-    - startTime
+    - venue
+    - city
+    - imageUrl
+    - category
+    - startDate
+    - startingPrice
+    - availableSeats
   properties:
     id:
       type: integer
       format: int64
       example: 1
-    name:
+    title:
       type: string
       example: Rock Concert Berlin
     description:
       type: string
       example: Live concert in Berlin
-    venueName:
+    venue:
       type: string
       example: Berlin Arena
-    startTime:
+    city:
+      type: string
+      example: Berlin
+    imageUrl:
+      type: string
+      format: uri
+      example: https://picsum.photos/seed/event-1/480/270
+    category:
+      type: string
+      example: Concert
+    startDate:
       type: string
       format: date-time
-      example: "2026-09-20T19:00:00"
+      description: Offset date-time, serialised with ISO_OFFSET_DATE_TIME.
+      example: "2026-09-20T19:00:00Z"
+    startingPrice:
+      type: number
+      description: Cheapest seat currently in AVAILABLE status. 0 when the event has no free seats.
+      example: 49.99
+    availableSeats:
+      type: integer
+      description: Number of seats in AVAILABLE status.
+      example: 50

@@ -1,0 +1,15 @@
+health:
+  get:
+    tags:
+      - Health
+    summary: Liveness probe
+    operationId: health
+    description: Returns a plain text body, not JSON. Does not touch the database.
+    responses:
+      "200":
+        description: Service is up
+        content:
+          text/plain:
+            schema:
+              type: string
+              example: OK
