@@ -61,7 +61,7 @@ export function RegisterPage() {
         <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-5 py-16">
             <AuthBackground />
 
-            <section className="relative z-10 w-full max-w-[400px] rounded-[18px] border border-[var(--border)] bg-[var(--surface)] px-8 py-9">
+            <section className="relative z-10 w-full max-w-[400px] rounded-[18px] border border-[var(--border)] bg-[var(--surface)] px-6 py-9 sm:px-8">
                 <div className="mb-2 text-center text-2xl tracking-tight text-[var(--ink)]">
                     STAGE<span className="text-[var(--crimson)]">PASS</span>
                 </div>
