@@ -26,15 +26,14 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/health").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/events").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/events/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/reservations").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/bookings").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/bookings/*").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/bookings/customer/me").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/bookings/ticket/**").authenticated()
-                        .anyRequest().permitAll()
+                        .requestMatchers("/api/reservations/**").authenticated()
+                        .requestMatchers("/api/payments/**").authenticated()
+                        .requestMatchers("/api/bookings/**").authenticated()
+                        .anyRequest().denyAll()
                 )
                 .addFilterBefore(
                         jwtAuthenticationFilter,

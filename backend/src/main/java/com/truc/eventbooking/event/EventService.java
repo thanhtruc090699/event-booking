@@ -1,5 +1,6 @@
 package com.truc.eventbooking.event;
 
+import com.truc.eventbooking.common.exception.NotFoundException;
 import com.truc.eventbooking.event.dto.EventDetailResponse;
 import com.truc.eventbooking.event.dto.EventSummaryResponse;
 import com.truc.eventbooking.seat.Seat;
@@ -31,7 +32,7 @@ public class EventService {
     
     public EventDetailResponse getEventById(Long id) {
         return eventRepository.findById(id).map(this::toDetailResponse)
-                .orElseThrow(()-> new RuntimeException("Event Not Found"));
+                .orElseThrow(()-> new NotFoundException("EVENT_NOT_FOUND", "Event not found"));
     }
     
     private EventSummaryResponse toSummaryResponse(Event event) {

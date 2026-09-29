@@ -4,6 +4,7 @@ import com.truc.eventbooking.auth.AuthRepository;
 import com.truc.eventbooking.auth.Customer;
 import com.truc.eventbooking.common.exception.BusinessConflictException;
 import com.truc.eventbooking.common.exception.NotFoundException;
+import com.truc.eventbooking.event.Event;
 import com.truc.eventbooking.seat.Seat;
 import com.truc.eventbooking.seat.SeatService;
 import jakarta.transaction.Transactional;
@@ -45,10 +46,21 @@ public class ReservationService {
         );
 
         Reservation reservation = new Reservation(customer);
+        Event reservationEvent = null;
 
-        // Mark each seat as reserved and add to reservation
+        // Mark each seat as reserved and add to reservation.
+        // The transaction rolls back every seat locked so far if one of them
+        // turns out to belong to a different event.
         for (Long seatId : request.seatIds()) {
             Seat seat = seatService.markAsReserved(seatId);
+            if (reservationEvent == null) {
+                reservationEvent = seat.getEvent();
+            } else if (!reservationEvent.getId().equals(seat.getEvent().getId())) {
+                throw new BusinessConflictException(
+                        "SEATS_SPAN_MULTIPLE_EVENTS",
+                        "All seats in a reservation must belong to the same event"
+                );
+            }
             reservation.addSeat(seat);
         }
 
