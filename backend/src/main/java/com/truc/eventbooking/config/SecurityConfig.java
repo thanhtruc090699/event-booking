@@ -26,13 +26,25 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
+                        // Public
                         .requestMatchers("/health").permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/auth/register", "/api/auth/login",
+                                "/api/auth/social", "/api/auth/refresh", "/api/auth/logout").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/events").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/events/**").permitAll()
+
+                        // Authenticated
+                        .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
+
+                        // Admin only: read every record in the system
+                        .requestMatchers(HttpMethod.GET, "/api/reservations").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/bookings").hasRole("ADMIN")
+
+                        // Any signed-in customer, including admins
                         .requestMatchers("/api/reservations/**").authenticated()
                         .requestMatchers("/api/payments/**").authenticated()
                         .requestMatchers("/api/bookings/**").authenticated()
+
                         .anyRequest().denyAll()
                 )
                 .addFilterBefore(

@@ -27,6 +27,10 @@ public class Customer {
     @Column(name = "provider_id")
     private String providerId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false, columnDefinition = "varchar(32) not null default 'CUSTOMER'")
+    private CustomerRole role = CustomerRole.CUSTOMER;
+
     @Column(name = "created_at",nullable = false,updatable = false)
     private OffsetDateTime createdAt;
 
@@ -67,6 +71,12 @@ public class Customer {
     }
     public void setProviderId(String providerId) {
         this.providerId = providerId;
+    }
+    public CustomerRole getRole() {
+        return role;
+    }
+    public void setRole(CustomerRole role) {
+        this.role = role;
     }
     public OffsetDateTime getCreatedAt() {
         return createdAt;

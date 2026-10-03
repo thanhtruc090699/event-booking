@@ -8,10 +8,15 @@ info:
     Covers event browsing, seat availability, seat reservation, payment and
     booking confirmation.
     This document is kept in sync with the @RestController classes under
-    backend/src/main/java and with SecurityConfig. Everything under
-    /api/reservations, /api/payments and /api/bookings requires a bearer token;
-    /api/auth/**, /health and the event read endpoints are public; anything else
-    is denied.
+    backend/src/main/java and with SecurityConfig.
+
+    Authorization model: every /api/reservations, /api/payments and /api/bookings
+    path requires a bearer token. GET /api/reservations and GET /api/bookings
+    additionally require the ADMIN role, because they return every record in the
+    system; a CUSTOMER reads only their own data through /api/bookings/customer/me,
+    /api/bookings/{bookingId} and /api/bookings/ticket/{ticketCode}. /api/auth/**
+    except /api/auth/me, /health and the event read endpoints are public, and
+    anything else is denied.
   license:
     name: MIT
 

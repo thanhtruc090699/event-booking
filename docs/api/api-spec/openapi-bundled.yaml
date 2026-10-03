@@ -3,7 +3,8 @@ info:
   title: Event Booking Platform API
   version: 0.1.0
   description: |
-    API contract for a Spring Boot event booking backend. Covers event browsing, seat availability, seat reservation, payment and booking confirmation. This document is kept in sync with the @RestController classes under backend/src/main/java and with SecurityConfig. Everything under /api/reservations, /api/payments and /api/bookings requires a bearer token; /api/auth/**, /health and the event read endpoints are public; anything else is denied.
+    API contract for a Spring Boot event booking backend. Covers event browsing, seat availability, seat reservation, payment and booking confirmation. This document is kept in sync with the @RestController classes under backend/src/main/java and with SecurityConfig.
+    Authorization model: every /api/reservations, /api/payments and /api/bookings path requires a bearer token. GET /api/reservations and GET /api/bookings additionally require the ADMIN role, because they return every record in the system; a CUSTOMER reads only their own data through /api/bookings/customer/me, /api/bookings/{bookingId} and /api/bookings/ticket/{ticketCode}. /api/auth/** except /api/auth/me, /health and the event read endpoints are public, and anything else is denied.
   license:
     name: MIT
 servers:
@@ -307,7 +308,7 @@ paths:
       security:
         - bearerAuth: []
       description: |
-        Returns every reservation across all customers. Only the first seat of each reservation is included. Requires authentication, but any authenticated customer can read every reservation in the system.
+        Admin only. Returns every reservation across all customers, first seat only. A signed-in CUSTOMER receives 403.
       responses:
         '200':
           description: All reservations
@@ -319,6 +320,12 @@ paths:
                   $ref: '#/components/schemas/ReservationResponse'
         '401':
           description: Missing or invalid access token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Authenticated but the role is not ADMIN
           content:
             application/json:
               schema:
@@ -528,7 +535,7 @@ paths:
       security:
         - bearerAuth: []
       description: |
-        Returns every booking across all customers. Requires authentication, but any authenticated customer can read every booking in the system.
+        Admin only. Returns every booking across all customers. A signed-in CUSTOMER receives 403. A CUSTOMER reads their own bookings through /api/bookings/customer/me instead.
       responses:
         '200':
           description: All bookings
@@ -540,6 +547,12 @@ paths:
                   $ref: '#/components/schemas/BookingResponse'
         '401':
           description: Missing or invalid access token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Authenticated but the role is not ADMIN
           content:
             application/json:
               schema:
@@ -878,6 +891,7 @@ components:
         - customerId
         - email
         - fullName
+        - role
       properties:
         customerId:
           type: integer
@@ -890,6 +904,14 @@ components:
         fullName:
           type: string
           example: Jane Doe
+        role:
+          type: string
+          description: |
+            Resolved from the database on every request, not from the token, so a role change takes effect on the next call without re-login.
+          enum:
+            - CUSTOMER
+            - ADMIN
+          example: CUSTOMER
     EventSummaryResponse:
       type: object
       required:

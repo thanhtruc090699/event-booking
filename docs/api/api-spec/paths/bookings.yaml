@@ -7,8 +7,9 @@ bookings:
     security:
       - bearerAuth: []
     description: >
-      Returns every booking across all customers. Requires authentication, but any
-      authenticated customer can read every booking in the system.
+      Admin only. Returns every booking across all customers. A signed-in CUSTOMER
+      receives 403. A CUSTOMER reads their own bookings through
+      /api/bookings/customer/me instead.
     responses:
       "200":
         description: All bookings
@@ -20,6 +21,12 @@ bookings:
                 $ref: "../components/schema/booking.yaml#/BookingResponse"
       "401":
         description: Missing or invalid access token
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+      "403":
+        description: Authenticated but the role is not ADMIN
         content:
           application/json:
             schema:

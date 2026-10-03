@@ -119,6 +119,7 @@ MeResponse:
     - customerId
     - email
     - fullName
+    - role
   properties:
     customerId:
       type: integer
@@ -131,3 +132,12 @@ MeResponse:
     fullName:
       type: string
       example: Jane Doe
+    role:
+      type: string
+      description: >
+        Resolved from the database on every request, not from the token, so a role
+        change takes effect on the next call without re-login.
+      enum:
+        - CUSTOMER
+        - ADMIN
+      example: CUSTOMER

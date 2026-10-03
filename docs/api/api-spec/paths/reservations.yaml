@@ -7,9 +7,8 @@ reservations:
     security:
       - bearerAuth: []
     description: >
-      Returns every reservation across all customers. Only the first seat of each
-      reservation is included. Requires authentication, but any authenticated
-      customer can read every reservation in the system.
+      Admin only. Returns every reservation across all customers, first seat only.
+      A signed-in CUSTOMER receives 403.
     responses:
       "200":
         description: All reservations
@@ -21,6 +20,12 @@ reservations:
                 $ref: "../components/schema/reservation.yaml#/ReservationResponse"
       "401":
         description: Missing or invalid access token
+        content:
+          application/json:
+            schema:
+              $ref: "../components/schema/error.yaml#/ErrorResponse"
+      "403":
+        description: Authenticated but the role is not ADMIN
         content:
           application/json:
             schema:

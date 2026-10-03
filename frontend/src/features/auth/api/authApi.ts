@@ -23,6 +23,7 @@ export type MeResponse = {
     customerId: number;
     email: string;
     fullName: string;
+    role: "CUSTOMER" | "ADMIN";
 };
 
 export type RefreshResponse = {

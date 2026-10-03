@@ -21,15 +21,33 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JWTService jwtService;
     private final String googleClientId;
+    private final String bootstrapAdminEmail;
     private final RestClient restClient = RestClient.create();
     public AuthService(AuthRepository authRepository,
                        PasswordEncoder passwordEncoder,
                        JWTService jwtService,
-                       @Value("${app.social.google.client-id}") String googleClientId) {
+                       @Value("${app.social.google.client-id}") String googleClientId,
+                       @Value("${app.admin.email:}") String bootstrapAdminEmail) {
         this.authRepository = authRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.googleClientId = googleClientId;
+        this.bootstrapAdminEmail = bootstrapAdminEmail;
+    }
+
+    /**
+     * Bootstraps the first administrator. There is no admin UI, so the account
+     * listed in app.admin.email is promoted to ADMIN on registration and on every
+     * password or social login. The role then lives in the database like any other
+     * assignment and can be changed with a plain UPDATE statement.
+     */
+    private Customer applyBootstrapAdminRole(Customer customer) {
+        if (!bootstrapAdminEmail.isBlank() && customer.getRole() == CustomerRole.CUSTOMER
+                && customer.getEmail().equalsIgnoreCase(bootstrapAdminEmail.trim())) {
+            customer.setRole(CustomerRole.ADMIN);
+            return authRepository.save(customer);
+        }
+        return customer;
     }
 
     public RegisterResponse register(RegisterRequest request) {
@@ -43,7 +61,7 @@ public class AuthService {
                 passwordHash,
                 request.fullName()
         );
-        Customer savedCustomer = authRepository.save(customer);
+        Customer savedCustomer = applyBootstrapAdminRole(authRepository.save(customer));
         return toRegisterResponse(savedCustomer);
     }
 
@@ -58,6 +76,7 @@ public class AuthService {
         if(!passwordMatches) {
             throw new BusinessConflictException("PASSWORD_MISMATCH", "Password does not match");
         }
+        customer = applyBootstrapAdminRole(customer);
         String accessToken = jwtService.generateToken(customer);
         String refreshToken = jwtService.generateRefreshToken(customer);
         return new LoginResponse(
@@ -75,7 +94,7 @@ public class AuthService {
             case "google" -> customer = verifyGoogleToken(request.token());
             default -> throw new BusinessConflictException("UNSUPPORTED_PROVIDER", "Unsupported social provider: " + request.provider());
         }
-
+        customer = applyBootstrapAdminRole(customer);
         String accessToken = jwtService.generateToken(customer);
         String refreshToken = jwtService.generateRefreshToken(customer);
         return new LoginResponse(
@@ -148,7 +167,8 @@ public class AuthService {
             }
             return new MeResponse(customer.getCustomerId(),
                     customer.getEmail(),
-                    customer.getFullName());
+                    customer.getFullName(),
+                    customer.getRole());
 
         } catch (JwtException | IllegalArgumentException e) {
             throw new ForbiddenException("INVALID_ACCESS_TOKEN","Invalid access token");
