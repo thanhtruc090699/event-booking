@@ -92,52 +92,72 @@ public class DataSeeder implements CommandLineRunner {
                 "https://picsum.photos/seed/event-6/480/270",
                 false
         ));
-        for(int i = 1; i <= 50; i++) {
-            String row = i <= 25 ? "A" : "B";
-            String block = i <= 25 ? "1" : "2";
-            String number = String.format("%02d", i % 25 + 1);
-            BigDecimal price = i <= 25 ? new BigDecimal(49.99) : new BigDecimal(39.99);
-            seatRepository.save(new Seat(event1, row, block, number, price, SeatStatus.AVAILABLE));
+        // Event 1: 5 rows (A-E) with 8 seats each = 40 seats total
+        char[] event1Rows = {'A', 'B', 'C', 'D', 'E'};
+        int seatCount = 0;
+        for(char row : event1Rows) {
+            for(int seatNum = 1; seatNum <= 8; seatNum++) {
+                String block = seatNum <= 4 ? "1" : "2";
+                String number = String.format("%02d", seatNum);
+                BigDecimal price = row == 'A' || row == 'B' ? new BigDecimal(49.99) : new BigDecimal(39.99);
+                seatRepository.save(new Seat(event1, String.valueOf(row), block, number, price, SeatStatus.AVAILABLE));
+                seatCount++;
+            }
         }
 
-        for(int i = 1; i <= 30; i++) {
-            String row = i <= 15 ? "A" : "B";
-            String block = i <= 15 ? "1" : "2";
-            String number = String.format("%02d", i % 15 + 1);
-            BigDecimal price = i <= 15 ? new BigDecimal(120.00) : new BigDecimal(89.00);
-            seatRepository.save(new Seat(event2, row, block, number, price, SeatStatus.AVAILABLE));
+        // Event 2: 4 rows (A-D) with 8 seats each = 32 seats total
+        char[] event2Rows = {'A', 'B', 'C', 'D'};
+        for(char row : event2Rows) {
+            for(int seatNum = 1; seatNum <= 8; seatNum++) {
+                String block = seatNum <= 4 ? "1" : "2";
+                String number = String.format("%02d", seatNum);
+                BigDecimal price = row == 'A' || row == 'B' ? new BigDecimal(120.00) : new BigDecimal(89.00);
+                seatRepository.save(new Seat(event2, String.valueOf(row), block, number, price, SeatStatus.AVAILABLE));
+            }
         }
 
-        for(int i = 1; i <= 40; i++) {
-            String row = i <= 20 ? "A" : "B";
-            String block = i <= 20 ? "1" : "2";
-            String number = String.format("%02d", i % 20 + 1);
-            BigDecimal price = i <= 20 ? new BigDecimal(35.00) : new BigDecimal(29.99);
-            seatRepository.save(new Seat(event3, row, block, number, price, SeatStatus.AVAILABLE));
+        // Event 3: 5 rows (A-E) with 8 seats each = 40 seats total
+        char[] event3Rows = {'A', 'B', 'C', 'D', 'E'};
+        for(char row : event3Rows) {
+            for(int seatNum = 1; seatNum <= 8; seatNum++) {
+                String block = seatNum <= 4 ? "1" : "2";
+                String number = String.format("%02d", seatNum);
+                BigDecimal price = row == 'A' || row == 'B' ? new BigDecimal(35.00) : new BigDecimal(29.99);
+                seatRepository.save(new Seat(event3, String.valueOf(row), block, number, price, SeatStatus.AVAILABLE));
+            }
         }
 
-        for(int i = 1; i <= 25; i++) {
-            String row = i <= 12 ? "A" : "B";
-            String block = i <= 12 ? "1" : "2";
-            String number = String.format("%02d", i % 12 + 1);
-            BigDecimal price = i <= 12 ? new BigDecimal(15.00) : new BigDecimal(10.00);
-            seatRepository.save(new Seat(event4, row, block, number, price, SeatStatus.AVAILABLE));
+        // Event 4: 4 rows (A-D) with 8 seats each = 32 seats total
+        char[] event4Rows = {'A', 'B', 'C', 'D'};
+        for(char row : event4Rows) {
+            for(int seatNum = 1; seatNum <= 8; seatNum++) {
+                String block = seatNum <= 4 ? "1" : "2";
+                String number = String.format("%02d", seatNum);
+                BigDecimal price = row == 'A' || row == 'B' ? new BigDecimal(15.00) : new BigDecimal(10.00);
+                seatRepository.save(new Seat(event4, String.valueOf(row), block, number, price, SeatStatus.AVAILABLE));
+            }
         }
 
-        for(int i = 1; i <= 60; i++) {
-            String row = i <= 30 ? "A" : "B";
-            String block = i <= 30 ? "1" : "2";
-            String number = String.format("%02d", i % 30 + 1);
-            BigDecimal price = i <= 30 ? new BigDecimal(25.00) : new BigDecimal(19.99);
-            seatRepository.save(new Seat(event5, row, block, number, price, SeatStatus.AVAILABLE));
+        // Event 5: 8 rows (A-H) with 8 seats each = 64 seats total
+        char[] event5Rows = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'};
+        for(char row : event5Rows) {
+            for(int seatNum = 1; seatNum <= 8; seatNum++) {
+                String block = seatNum <= 4 ? "1" : "2";
+                String number = String.format("%02d", seatNum);
+                BigDecimal price = row == 'A' || row == 'B' || row == 'C' ? new BigDecimal(25.00) : new BigDecimal(19.99);
+                seatRepository.save(new Seat(event5, String.valueOf(row), block, number, price, SeatStatus.AVAILABLE));
+            }
         }
 
-        for(int i = 1; i <= 20; i++) {
-            String row = "A";
-            String block = "1";
-            String number = String.format("%02d", i);
-            BigDecimal price = new BigDecimal(0.00);
-            seatRepository.save(new Seat(event6, row, block, number, price, SeatStatus.AVAILABLE));
+        // Event 6: 3 rows (A-C) with 8 seats each = 24 seats total (Free event)
+        char[] event6Rows = {'A', 'B', 'C'};
+        for(char row : event6Rows) {
+            for(int seatNum = 1; seatNum <= 8; seatNum++) {
+                String block = seatNum <= 4 ? "1" : "2";
+                String number = String.format("%02d", seatNum);
+                BigDecimal price = BigDecimal.ZERO;
+                seatRepository.save(new Seat(event6, String.valueOf(row), block, number, price, SeatStatus.AVAILABLE));
+            }
         }
     }
 }
