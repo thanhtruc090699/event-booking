@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { EventSummaryCard } from "@/features/booking/components/EventSummaryCard";
 import { PriceSummary } from "@/features/booking/components/PriceSummary";
@@ -17,9 +17,10 @@ export function CheckoutPage() {
     const { accessToken } = useAuth();
     const [reservation, setReservation] = useState<ReservationSummaryDto | null>(null);
     const [loading, setLoading] = useState(true);
+    const router = useRouter();
 
     useEffect(() => {
-        // Nếu không có reservationId hoặc accessToken, dừng luôn
+        // If reservationId or accessToken is missing, stop early
         if (!reservationId || !accessToken) {
             return;
         }
@@ -27,15 +28,21 @@ export function CheckoutPage() {
         getReservation(reservationId, accessToken)
             .then(data => {
                 setReservation(data);
+                const expiresAt = new Date(data.expiresAt);
+                const now = new Date();
+                if(expiresAt <= now) {
+                    router.push(`/booking/expired?reservationId=${reservationId}`);
+                    return;
+                }
                 setLoading(false);
             })
             .catch(err => {
                 console.error("Failed to fetch reservation:", err);
                 setLoading(false);
             });
-    }, [reservationId, accessToken]);
+    }, [reservationId, accessToken, router]);
 
-    // Chưa có reservationId hoặc user chưa login
+    // If reservationId is missing or user is not logged in
     if (!reservationId) {
         return (
             <main className="mx-auto max-w-[640px] px-6 pb-24 pt-7">
@@ -111,6 +118,9 @@ export function CheckoutPage() {
                 label="Your seats are reserved for"
                 expiresAt={reservation.expiresAt}
                 note="Complete your booking before the timer expires."
+                onExpire={() => {
+                    router.push(`/booking/expired?reservationId=${reservationId}`);
+                }}
             />
 
             <section className="mb-[18px] rounded-xl border border-[var(--border)] bg-[var(--surface)] p-[18px]">

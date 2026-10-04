@@ -41,6 +41,14 @@ export function PaymentPage() {
                     0
                 );
                 setReservation({ totalAmount, expiresAt: data.expiresAt });
+
+                const now = new Date();
+                const expiresAt = new Date(data.expiresAt);
+
+                if (expiresAt <= now) {
+                    router.push(`/booking/expired?reservationId=${reservationId}`);
+                    return;
+                }
             })
             .catch((error) => {
                 console.error("Failed to fetch reservation:", error);
@@ -50,7 +58,7 @@ export function PaymentPage() {
                         : "Failed to load the reservation."
                 );
             });
-    }, [reservationId, accessToken]);
+    }, [reservationId, accessToken, router]);
 
     async function createPayPalOrder() {
         if (!reservationId || !accessToken) {
@@ -135,6 +143,9 @@ export function PaymentPage() {
             <TimerBanner
                 label="Reservation expires in"
                 expiresAt={reservation?.expiresAt ?? ""}
+                onExpire={() => {
+                    router.push(`/booking/expired?reservationId=${reservationId}`);
+                }}
             />
 
             <section className="mb-[18px] rounded-xl border border-[var(--border)] bg-[var(--surface)] p-[18px]">

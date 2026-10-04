@@ -9,6 +9,7 @@ type TimerBannerProps = {
     expiresAt?: string;  // ISO date string
     note?: string;
     danger?: boolean;
+    onExpire?: () => void;  // Callback when timer expires
 };
 
 export function TimerBanner({
@@ -17,6 +18,7 @@ export function TimerBanner({
     expiresAt,
     note,
     danger = false,
+    onExpire,
 }: TimerBannerProps) {
     const [timeLeft, setTimeLeft] = useState<string>("00:00");
     
@@ -32,6 +34,7 @@ export function TimerBanner({
             
             if (diff <= 0) {
                 setTimeLeft("00:00");
+                onExpire?.();
                 return;
             }
             
@@ -46,7 +49,7 @@ export function TimerBanner({
         const interval = setInterval(updateTimer, 1000);
         
         return () => clearInterval(interval);
-    }, [expiresAt, time]);
+    }, [expiresAt, time, onExpire]);
     
     return (
         <div
