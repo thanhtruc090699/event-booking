@@ -72,6 +72,13 @@ public class ReservationService {
     public ReservationSummaryResponse getReservationSummaryById(Long reservationId, Long customerId) {
         Reservation reservation = reservationRepository.findById(reservationId)
             .orElseThrow(() -> new NotFoundException("RESERVATION_NOT_FOUND", "Reservation not found"));
+
+        if (reservation.getStatus()==ReservationStatus.ACTIVE && reservation.getExpiryDate().isBefore(OffsetDateTime.now())) {
+            markAsExpired(reservationId);
+            throw new BusinessConflictException(
+                    "RESERVATION_EXPIRED", "Reservation is expired"
+            );
+        }
         
         // Check ownership - only allow customer to view their own reservation
         if (!reservation.getCustomer().getCustomerId().equals(customerId)) {

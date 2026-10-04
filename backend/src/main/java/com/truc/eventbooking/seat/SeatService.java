@@ -40,9 +40,12 @@ public class SeatService {
     }
     public Seat releaseSeat(Long seatId) {
        Seat seat = seatRepository.findById(seatId).orElseThrow(()-> new NotFoundException("SEAT_NOT_FOUND", "Seat not found"));
-       if(seat.getSeatStatus()!=SeatStatus.RESERVED) throw new BusinessConflictException("SEAT_NOT_REVERSED", "Seat not reversed");
-
-       seat.setSeatStatus(SeatStatus.AVAILABLE);
+       
+       // Only release if currently RESERVED, otherwise keep unchanged (no exception thrown)
+       if(seat.getSeatStatus() == SeatStatus.RESERVED) {
+           seat.setSeatStatus(SeatStatus.AVAILABLE);
+       }
+       
        return seat;
     }
     public Seat markAsReserved(Long seatId) {
@@ -54,9 +57,11 @@ public class SeatService {
     public Seat markAsBooked(Long seatId) {
         Seat seat = seatRepository.findById(seatId).orElseThrow(()-> new NotFoundException("SEAT_NOT_FOUND", "Seat not found"));
 
-        if (seat.getSeatStatus()!=SeatStatus.RESERVED) throw new BusinessConflictException("SEAT_NOT_REVERSED", "Seat not reversed");
-
-        seat.setSeatStatus(SeatStatus.BOOKED);
+        // Only update if currently RESERVED
+        if (seat.getSeatStatus() == SeatStatus.RESERVED) {
+            seat.setSeatStatus(SeatStatus.BOOKED);
+        }
+        
         return seat;
     }
 }
