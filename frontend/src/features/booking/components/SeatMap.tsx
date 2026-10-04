@@ -130,13 +130,19 @@ export function SeatMap({ eventId }: SeatMapProps) {
     const orderedSeats = [...seats].sort(
         (first, second) => first.row - second.row || first.number - second.number
     );
-    const seatRows = Array.from(
-        { length: Math.ceil(orderedSeats.length / seatsPerRow) },
-        (_, rowIndex) => orderedSeats.slice(
-            rowIndex * seatsPerRow,
-            (rowIndex + 1) * seatsPerRow
-        )
-    );
+    
+    // Group seats by row
+    const groupedSeats = orderedSeats.reduce((acc, seat) => {
+        const rowKey = seat.row;
+        if (!acc[rowKey]) acc[rowKey] = [];
+        acc[rowKey].push(seat);
+        return acc;
+    }, {} as Record<number, typeof seats>);
+    
+    // Convert to array of rows sorted by row number
+    const seatRows = Object.entries(groupedSeats)
+        .sort(([a], [b]) => parseInt(a) - parseInt(b))
+        .map(([_, seats]) => seats);
 
     async function continueToBooking() {
         if (selectedSeatIds.length === 0) {
@@ -178,33 +184,38 @@ export function SeatMap({ eventId }: SeatMapProps) {
                 </div>
 
                 <div className="overflow-x-auto">
-                    <div className="mx-auto flex min-w-[400px] w-fit flex-col gap-3">
-                        {seatRows.map((rowSeats, rowIndex) => (
-                            <div
-                                key={rowIndex}
-                                className="grid grid-cols-8 gap-3"
-                            >
-                                {rowSeats.map((seat) => {
-                                    const status = getStatus(seat);
+                    <div className="mx-auto flex min-w-[400px] w-fit flex-col gap-6">
+                        {seatRows.map((rowSeats, rowIndex) => {
+                            const rowNum = rowSeats[0].row;
+                            return (
+                                <div key={rowIndex}>
+                                    <div className="mb-2 text-sm font-semibold text-[var(--muted)]">
+                                        Row {rowNum}
+                                    </div>
+                                    <div className="grid grid-cols-8 gap-3">
+                                        {rowSeats.map((seat) => {
+                                            const status = getStatus(seat);
 
-                                    return (
-                                        <button
-                                            key={seat.id}
-                                            type="button"
-                                            disabled={
-                                                seat.baseStatus === "held" ||
-                                                seat.baseStatus === "booked"
-                                            }
-                                            onClick={() => toggleSeat(seat)}
-                                            className={getSeatClass(status)}
-                                            aria-label={`Row ${seat.row}, Seat ${seat.number}, ${status}`}
-                                        >
-                                            {seat.number}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        ))}
+                                            return (
+                                                <button
+                                                    key={seat.id}
+                                                    type="button"
+                                                    disabled={
+                                                        seat.baseStatus === "held" ||
+                                                        seat.baseStatus === "booked"
+                                                    }
+                                                    onClick={() => toggleSeat(seat)}
+                                                    className={getSeatClass(status)}
+                                                    aria-label={`Row ${seat.row}, Seat ${seat.number}, ${status}`}
+                                                >
+                                                    {seat.number}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
 
