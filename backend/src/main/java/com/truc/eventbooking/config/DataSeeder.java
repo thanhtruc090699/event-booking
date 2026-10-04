@@ -94,14 +94,11 @@ public class DataSeeder implements CommandLineRunner {
         ));
         // Event 1: 5 rows (A-E) with 8 seats each = 40 seats total
         char[] event1Rows = {'A', 'B', 'C', 'D', 'E'};
-        int seatCount = 0;
         for(char row : event1Rows) {
             for(int seatNum = 1; seatNum <= 8; seatNum++) {
-                String block = seatNum <= 4 ? "1" : "2";
-                String number = String.format("%02d", seatNum);
-                BigDecimal price = row == 'A' || row == 'B' ? new BigDecimal(49.99) : new BigDecimal(39.99);
-                seatRepository.save(new Seat(event1, String.valueOf(row), block, number, price, SeatStatus.AVAILABLE));
-                seatCount++;
+                String seatNumber = String.format("%02d", seatNum);
+                BigDecimal price = row == 'A' || row == 'B' ? new BigDecimal("49.99") : new BigDecimal("39.99");
+                seatRepository.save(new Seat(event1, "", String.valueOf(row), seatNumber, price, SeatStatus.AVAILABLE));
             }
         }
 
@@ -109,10 +106,9 @@ public class DataSeeder implements CommandLineRunner {
         char[] event2Rows = {'A', 'B', 'C', 'D'};
         for(char row : event2Rows) {
             for(int seatNum = 1; seatNum <= 8; seatNum++) {
-                String block = seatNum <= 4 ? "1" : "2";
-                String number = String.format("%02d", seatNum);
-                BigDecimal price = row == 'A' || row == 'B' ? new BigDecimal(120.00) : new BigDecimal(89.00);
-                seatRepository.save(new Seat(event2, String.valueOf(row), block, number, price, SeatStatus.AVAILABLE));
+                String seatNumber = String.format("%02d", seatNum);
+                BigDecimal price = row == 'A' || row == 'B' ? new BigDecimal("120.00") : new BigDecimal("89.00");
+                seatRepository.save(new Seat(event2, "", String.valueOf(row), seatNumber, price, SeatStatus.AVAILABLE));
             }
         }
 
@@ -120,10 +116,9 @@ public class DataSeeder implements CommandLineRunner {
         char[] event3Rows = {'A', 'B', 'C', 'D', 'E'};
         for(char row : event3Rows) {
             for(int seatNum = 1; seatNum <= 8; seatNum++) {
-                String block = seatNum <= 4 ? "1" : "2";
-                String number = String.format("%02d", seatNum);
-                BigDecimal price = row == 'A' || row == 'B' ? new BigDecimal(35.00) : new BigDecimal(29.99);
-                seatRepository.save(new Seat(event3, String.valueOf(row), block, number, price, SeatStatus.AVAILABLE));
+                String seatNumber = String.format("%02d", seatNum);
+                BigDecimal price = row == 'A' || row == 'B' ? new BigDecimal("35.00") : new BigDecimal("29.99");
+                seatRepository.save(new Seat(event3, "", String.valueOf(row), seatNumber, price, SeatStatus.AVAILABLE));
             }
         }
 
@@ -131,10 +126,9 @@ public class DataSeeder implements CommandLineRunner {
         char[] event4Rows = {'A', 'B', 'C', 'D'};
         for(char row : event4Rows) {
             for(int seatNum = 1; seatNum <= 8; seatNum++) {
-                String block = seatNum <= 4 ? "1" : "2";
-                String number = String.format("%02d", seatNum);
-                BigDecimal price = row == 'A' || row == 'B' ? new BigDecimal(15.00) : new BigDecimal(10.00);
-                seatRepository.save(new Seat(event4, String.valueOf(row), block, number, price, SeatStatus.AVAILABLE));
+                String seatNumber = String.format("%02d", seatNum);
+                BigDecimal price = row == 'A' || row == 'B' ? new BigDecimal("15.00") : new BigDecimal("10.00");
+                seatRepository.save(new Seat(event4, "", String.valueOf(row), seatNumber, price, SeatStatus.AVAILABLE));
             }
         }
 
@@ -142,10 +136,9 @@ public class DataSeeder implements CommandLineRunner {
         char[] event5Rows = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'};
         for(char row : event5Rows) {
             for(int seatNum = 1; seatNum <= 8; seatNum++) {
-                String block = seatNum <= 4 ? "1" : "2";
-                String number = String.format("%02d", seatNum);
-                BigDecimal price = row == 'A' || row == 'B' || row == 'C' ? new BigDecimal(25.00) : new BigDecimal(19.99);
-                seatRepository.save(new Seat(event5, String.valueOf(row), block, number, price, SeatStatus.AVAILABLE));
+                String seatNumber = String.format("%02d", seatNum);
+                BigDecimal price = row == 'A' || row == 'B' || row == 'C' ? new BigDecimal("25.00") : new BigDecimal("19.99");
+                seatRepository.save(new Seat(event5, "", String.valueOf(row), seatNumber, price, SeatStatus.AVAILABLE));
             }
         }
 
@@ -153,10 +146,8 @@ public class DataSeeder implements CommandLineRunner {
         char[] event6Rows = {'A', 'B', 'C'};
         for(char row : event6Rows) {
             for(int seatNum = 1; seatNum <= 8; seatNum++) {
-                String block = seatNum <= 4 ? "1" : "2";
-                String number = String.format("%02d", seatNum);
-                BigDecimal price = BigDecimal.ZERO;
-                seatRepository.save(new Seat(event6, String.valueOf(row), block, number, price, SeatStatus.AVAILABLE));
+                String seatNumber = String.format("%02d", seatNum);
+                seatRepository.save(new Seat(event6, "", String.valueOf(row), seatNumber, BigDecimal.ZERO, SeatStatus.AVAILABLE));
             }
         }
     }

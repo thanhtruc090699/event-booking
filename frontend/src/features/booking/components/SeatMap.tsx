@@ -12,8 +12,8 @@ type SeatStatus = "available" | "selected" | "held" | "booked";
 
 type Seat = {
     id: string;
-    row: number;
-    number: number;
+    rowLabel: string;
+    seatNumber: number;
     baseStatus: Exclude<SeatStatus, "selected">;
     price: number;
 };
@@ -83,8 +83,8 @@ export function SeatMap({ eventId }: SeatMapProps) {
                 const data = await getEventSeats(eventId);
                 const convertedSeats = data.map((seat) => ({
                     id: seat.id.toString(),
-                    row: parseInt(seat.rowLabel),
-                    number: parseInt(seat.seatNumber),
+                    rowLabel: seat.rowLabel,
+                    seatNumber: parseInt(seat.seatNumber),
                     baseStatus: convertSeatStatus(seat.status),
                     price: seat.price,
                 }));
@@ -128,20 +128,20 @@ export function SeatMap({ eventId }: SeatMapProps) {
     }
 
     const orderedSeats = [...seats].sort(
-        (first, second) => first.row - second.row || first.number - second.number
+        (first, second) => first.rowLabel.localeCompare(second.rowLabel) || first.seatNumber - second.seatNumber
     );
     
-    // Group seats by row
+    // Group seats by rowLabel
     const groupedSeats = orderedSeats.reduce((acc, seat) => {
-        const rowKey = seat.row;
+        const rowKey = seat.rowLabel;
         if (!acc[rowKey]) acc[rowKey] = [];
         acc[rowKey].push(seat);
         return acc;
-    }, {} as Record<number, typeof seats>);
+    }, {} as Record<string, typeof seats>);
     
-    // Convert to array of rows sorted by row number
+    // Convert to array of rows sorted by rowLabel
     const seatRows = Object.entries(groupedSeats)
-        .sort(([a], [b]) => parseInt(a) - parseInt(b))
+        .sort(([a], [b]) => a.localeCompare(b))
         .map(([_, seats]) => seats);
 
     async function continueToBooking() {
@@ -186,11 +186,11 @@ export function SeatMap({ eventId }: SeatMapProps) {
                 <div className="overflow-x-auto">
                     <div className="mx-auto flex min-w-[400px] w-fit flex-col gap-6">
                         {seatRows.map((rowSeats, rowIndex) => {
-                            const rowNum = rowSeats[0].row;
+                            const rowLabel = rowSeats[0].rowLabel;
                             return (
                                 <div key={rowIndex}>
                                     <div className="mb-2 text-sm font-semibold text-[var(--muted)]">
-                                        Row {rowNum}
+                                        Row {rowLabel}
                                     </div>
                                     <div className="grid grid-cols-8 gap-3">
                                         {rowSeats.map((seat) => {
@@ -206,9 +206,9 @@ export function SeatMap({ eventId }: SeatMapProps) {
                                                     }
                                                     onClick={() => toggleSeat(seat)}
                                                     className={getSeatClass(status)}
-                                                    aria-label={`Row ${seat.row}, Seat ${seat.number}, ${status}`}
+                                                    aria-label={`Row ${seat.rowLabel}, Seat ${seat.seatNumber}, ${status}`}
                                                 >
-                                                    {seat.number}
+                                                    {seat.seatNumber}
                                                 </button>
                                             );
                                         })}
