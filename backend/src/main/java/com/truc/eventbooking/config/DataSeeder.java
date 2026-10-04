@@ -22,11 +22,24 @@ public class DataSeeder implements CommandLineRunner {
         this.seatRepository = seatRepository;
     }
 
+    public void resetAndSeedData() {
+        // Delete all existing data
+        seatRepository.deleteAll();
+        eventRepository.deleteAll();
+        
+        // Force seed new data
+        seedDataInternal();
+    }
+
     @Override
     public void run(String... args) {
         if(eventRepository.count() > 0) {
             return;
         }
+        seedDataInternal();
+    }
+
+    private void seedDataInternal() {
         Event event1 = eventRepository.save(new Event(
                 "Rock Concert Berlin",
                 "Live concert in Berlin",
