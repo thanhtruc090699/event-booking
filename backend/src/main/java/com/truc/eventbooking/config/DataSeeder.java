@@ -7,15 +7,44 @@ import com.truc.eventbooking.seat.SeatRepository;
 import com.truc.eventbooking.seat.SeatStatus;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.List;
 
 @Component
 public class DataSeeder implements CommandLineRunner {
 
+    private static final int SEATS_PER_ROW = 8;
+
+    private static final ZoneOffset SEED_ZONE = ZoneOffset.UTC;
+
+    private static final List<EventSeed> EVENT_SEEDS = List.of(
+            new EventSeed("Rock Concert Berlin", "Live concert in Berlin", "Berlin Arena",
+                    5, 19, "Berlin", "Concert", 1, true,
+                    5, 2, new BigDecimal("49.99"), new BigDecimal("39.99")),
+            new EventSeed("Startup Meetup Berlin", "Networking event for startups", "Berlin Tech Hub",
+                    8, 18, "Berlin", "Business", 6, false,
+                    3, 2, BigDecimal.ZERO, BigDecimal.ZERO),
+            new EventSeed("Jazz Night Hamburg", "Amazing jazz performance in Hamburg", "Hamburg Jazz Club",
+                    12, 20, "Hamburg", "Concert", 3, true,
+                    5, 2, new BigDecimal("35.00"), new BigDecimal("29.99")),
+            new EventSeed("Tech Conference Munich", "Software engineering conference in Munich", "Munich Messe",
+                    19, 9, "Munich", "Conference", 2, false,
+                    4, 2, new BigDecimal("120.00"), new BigDecimal("89.00")),
+            new EventSeed("Food Festival Cologne", "International food festival", "Cologne City Center",
+                    26, 12, "Cologne", "Festival", 5, true,
+                    8, 3, new BigDecimal("25.00"), new BigDecimal("19.99")),
+            new EventSeed("Art Exhibition Frankfurt", "Modern art exhibition", "Frankfurt Art Museum",
+                    40, 10, "Frankfurt", "Arts", 4, false,
+                    4, 2, new BigDecimal("15.00"), new BigDecimal("10.00"))
+    );
+
     private final EventRepository eventRepository;
     private final SeatRepository seatRepository;
+
     public DataSeeder(EventRepository eventRepository,
                       SeatRepository seatRepository) {
         this.eventRepository = eventRepository;
@@ -23,132 +52,53 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     @Override
+    @Transactional
     public void run(String... args) {
-        if(eventRepository.count() > 0) {
+        if (eventRepository.count() > 0) {
             return;
         }
-        Event event1 = eventRepository.save(new Event(
-                "Rock Concert Berlin",
-                "Live concert in Berlin",
-                "Berlin Arena",
-                OffsetDateTime.parse("2026-09-20T19:00:00Z"),
-                "Berlin",
-                "Concert",
-                "https://picsum.photos/seed/event-1/480/270",
-                true
-        ));
+        OffsetDateTime seedBase = OffsetDateTime.now(SEED_ZONE).withMinute(0).withSecond(0).withNano(0);
+        for (EventSeed seed : EVENT_SEEDS) {
+            OffsetDateTime startTime = seedBase.plusDays(seed.daysFromNow()).withHour(seed.hourOfDay());
+            Event event = eventRepository.save(new Event(
+                    seed.name(),
+                    seed.description(),
+                    seed.venue(),
+                    startTime,
+                    seed.city(),
+                    seed.category(),
+                    "https://picsum.photos/seed/event-" + seed.imageSeed() + "/480/270",
+                    seed.hot()
+            ));
+            createSeats(event, seed);
+        }
+    }
 
-        Event event2 = eventRepository.save(new Event(
-                "Tech Conference Munich",
-                "Software engineering conference in Munich",
-                "Munich Messe",
-                OffsetDateTime.parse("2026-10-05T09:00:00Z"),
-                "Munich",
-                "Conference",
-                "https://picsum.photos/seed/event-2/480/270",
-                false
-        ));
-
-        Event event3 = eventRepository.save(new Event(
-                "Jazz Night Hamburg",
-                "Amazing jazz performance in Hamburg",
-                "Hamburg Jazz Club",
-                OffsetDateTime.parse("2026-09-25T20:00:00Z"),
-                "Hamburg",
-                "Concert",
-                "https://picsum.photos/seed/event-3/480/270",
-                true
-        ));
-
-        Event event4 = eventRepository.save(new Event(
-                "Art Exhibition Frankfurt",
-                "Modern art exhibition",
-                "Frankfurt Art Museum",
-                OffsetDateTime.parse("2026-11-10T10:00:00Z"),
-                "Frankfurt",
-                "Arts",
-                "https://picsum.photos/seed/event-4/480/270",
-                false
-        ));
-
-        Event event5 = eventRepository.save(new Event(
-                "Food Festival Cologne",
-                "International food festival",
-                "Cologne City Center",
-                OffsetDateTime.parse("2026-10-15T12:00:00Z"),
-                "Cologne",
-                "Festival",
-                "https://picsum.photos/seed/event-5/480/270",
-                true
-        ));
-
-        Event event6 = eventRepository.save(new Event(
-                "Startup Meetup Berlin",
-                "Networking event for startups",
-                "Berlin Tech Hub",
-                OffsetDateTime.parse("2026-09-28T18:00:00Z"),
-                "Berlin",
-                "Business",
-                "https://picsum.photos/seed/event-6/480/270",
-                false
-        ));
-        // Event 1: 5 rows (A-E) with 8 seats each = 40 seats total
-        char[] event1Rows = {'A', 'B', 'C', 'D', 'E'};
-        for(char row : event1Rows) {
-            for(int seatNum = 1; seatNum <= 8; seatNum++) {
-                String seatNumber = String.format("%02d", seatNum);
-                BigDecimal price = row == 'A' || row == 'B' ? new BigDecimal("49.99") : new BigDecimal("39.99");
-                seatRepository.save(new Seat(event1, "", String.valueOf(row), seatNumber, price, SeatStatus.AVAILABLE));
+    private void createSeats(Event event, EventSeed seed) {
+        for (int rowIndex = 0; rowIndex < seed.rowCount(); rowIndex++) {
+            char rowLabel = (char) ('A' + rowIndex);
+            BigDecimal price = rowIndex < seed.premiumRowCount() ? seed.premiumPrice() : seed.standardPrice();
+            for (int seatNumber = 1; seatNumber <= SEATS_PER_ROW; seatNumber++) {
+                seatRepository.save(new Seat(event, "", String.valueOf(rowLabel),
+                        String.format("%02d", seatNumber), price, SeatStatus.AVAILABLE));
             }
         }
+    }
 
-        // Event 2: 4 rows (A-D) with 8 seats each = 32 seats total
-        char[] event2Rows = {'A', 'B', 'C', 'D'};
-        for(char row : event2Rows) {
-            for(int seatNum = 1; seatNum <= 8; seatNum++) {
-                String seatNumber = String.format("%02d", seatNum);
-                BigDecimal price = row == 'A' || row == 'B' ? new BigDecimal("120.00") : new BigDecimal("89.00");
-                seatRepository.save(new Seat(event2, "", String.valueOf(row), seatNumber, price, SeatStatus.AVAILABLE));
-            }
-        }
-
-        // Event 3: 5 rows (A-E) with 8 seats each = 40 seats total
-        char[] event3Rows = {'A', 'B', 'C', 'D', 'E'};
-        for(char row : event3Rows) {
-            for(int seatNum = 1; seatNum <= 8; seatNum++) {
-                String seatNumber = String.format("%02d", seatNum);
-                BigDecimal price = row == 'A' || row == 'B' ? new BigDecimal("35.00") : new BigDecimal("29.99");
-                seatRepository.save(new Seat(event3, "", String.valueOf(row), seatNumber, price, SeatStatus.AVAILABLE));
-            }
-        }
-
-        // Event 4: 4 rows (A-D) with 8 seats each = 32 seats total
-        char[] event4Rows = {'A', 'B', 'C', 'D'};
-        for(char row : event4Rows) {
-            for(int seatNum = 1; seatNum <= 8; seatNum++) {
-                String seatNumber = String.format("%02d", seatNum);
-                BigDecimal price = row == 'A' || row == 'B' ? new BigDecimal("15.00") : new BigDecimal("10.00");
-                seatRepository.save(new Seat(event4, "", String.valueOf(row), seatNumber, price, SeatStatus.AVAILABLE));
-            }
-        }
-
-        // Event 5: 8 rows (A-H) with 8 seats each = 64 seats total
-        char[] event5Rows = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'};
-        for(char row : event5Rows) {
-            for(int seatNum = 1; seatNum <= 8; seatNum++) {
-                String seatNumber = String.format("%02d", seatNum);
-                BigDecimal price = row == 'A' || row == 'B' || row == 'C' ? new BigDecimal("25.00") : new BigDecimal("19.99");
-                seatRepository.save(new Seat(event5, "", String.valueOf(row), seatNumber, price, SeatStatus.AVAILABLE));
-            }
-        }
-
-        // Event 6: 3 rows (A-C) with 8 seats each = 24 seats total (Free event)
-        char[] event6Rows = {'A', 'B', 'C'};
-        for(char row : event6Rows) {
-            for(int seatNum = 1; seatNum <= 8; seatNum++) {
-                String seatNumber = String.format("%02d", seatNum);
-                seatRepository.save(new Seat(event6, "", String.valueOf(row), seatNumber, BigDecimal.ZERO, SeatStatus.AVAILABLE));
-            }
-        }
+    private record EventSeed(
+            String name,
+            String description,
+            String venue,
+            int daysFromNow,
+            int hourOfDay,
+            String city,
+            String category,
+            int imageSeed,
+            boolean hot,
+            int rowCount,
+            int premiumRowCount,
+            BigDecimal premiumPrice,
+            BigDecimal standardPrice
+    ) {
     }
 }
