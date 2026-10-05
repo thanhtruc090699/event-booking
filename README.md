@@ -64,13 +64,6 @@ backend/src/main/java/com/truc/eventbooking/
 
 HTTP surface: `/api/auth`, `/api/events`, `/api/events/{id}/seats`, `/api/reservations`, `/api/payments`, `/api/bookings`, plus `/health`.
 
-Key design decisions:
-
-- **Seat holds instead of immediate booking.** Reserving creates a time-limited hold (`reservations`); seats flip to `RESERVED` and a scheduler releases any hold that expires unpaid. This stops two users from buying the same seat.
-- **Provider abstraction for payments.** `PaymentProvider` (`payment/provider/`) isolates PayPal behind an interface, so the payment logic is not coupled to one gateway.
-- **Stateless auth.** JWT access + refresh token. The refresh token is sent as an `HttpOnly` cookie scoped to `path=/api/auth/refresh` and `SameSite=Strict`, so it is neither readable from JavaScript nor sent to any other endpoint — limiting the blast radius if the tab is compromised.
-- **Bootstrap admin without an admin UI.** The address in `ADMIN_EMAIL` is promoted to `ADMIN` on first sign-in; afterwards the role lives in the database.
-
 ### Frontend
 
 ```
