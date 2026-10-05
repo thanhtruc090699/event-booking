@@ -12,6 +12,18 @@ A full-stack event ticket booking system: browse events, hold seats for a limite
 
 > The backend runs on a free Render instance, which sleeps after ~15 minutes of inactivity. The first request after that takes roughly a minute to wake up — this is expected, not an outage.
 
+### Key features
+
+- **Event catalogue** — browse upcoming events and their available seats
+- **Time-limited seat reservation** — a hold locks the seat, so two users cannot buy the same one
+- **PayPal Sandbox checkout** — behind a `PaymentProvider` interface, so the gateway is swappable
+- **JWT authentication with refresh-token flow** — short-lived access token, refresh token in an `HttpOnly` cookie
+- **Google OAuth login** — sign in with a Google account, no password to manage
+- **Ticket generation with unique ticket code** — every confirmed booking gets a code for lookup
+- **Automatic release of expired reservations** — a scheduler frees unpaid holds
+- **Admin role support** — the account in `ADMIN_EMAIL` is promoted to `ADMIN` on first sign-in
+- **CI/CD with GitHub Actions** — `.github/workflows/ci.yml` builds and tests the backend, lints and builds the frontend, then triggers deploys to Render and Vercel on merge to `main`
+
 API contract: [`docs/api/api-spec/openapi.yaml`](docs/api/api-spec/openapi.yaml)
 
 ## Architecture
