@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { EventCard } from "@/features/events/components/EventCard";
 import { SearchBox } from "@/features/events/components/SearchBox";
@@ -10,9 +11,10 @@ import type { EventDto } from "@/features/events/api/eventsApi";
 type CategoryFilter = "All" | string;
 
 export function AllEventsPage() {
+    const searchParams = useSearchParams();
     const [events, setEvents] = useState<EventDto[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeCategory, setActiveCategory] = useState<CategoryFilter>("All");
+    const [categoryOverride, setCategoryOverride] = useState<string | null>(null);
 
     useEffect(() => {
         getEvents()
@@ -30,6 +32,9 @@ export function AllEventsPage() {
         const cats = new Set<string>(events.map(e => e.category));
         return ["All", ...cats];
     }, [events]);
+
+    const activeCategory: CategoryFilter =
+        categoryOverride ?? searchParams.get("category") ?? "All";
 
     const filteredEvents = useMemo(() => {
         if (activeCategory === "All") {
@@ -58,7 +63,7 @@ export function AllEventsPage() {
                         <button
                             key={category}
                             type="button"
-                            onClick={() => setActiveCategory(category)}
+                            onClick={() => setCategoryOverride(category)}
                             className={cn(
                                 "rounded-full border px-4 py-2 text-sm transition",
                                 activeCategory === category

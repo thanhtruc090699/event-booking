@@ -162,11 +162,11 @@ export function RegisterPage() {
 
 function AuthBackground() {
     const images = [
-        "https://picsum.photos/seed/event-1/500/500",
-        "https://picsum.photos/seed/event-3/500/500",
-        "https://picsum.photos/seed/event-5/500/500",
-        "https://picsum.photos/seed/event-6/500/500",
-        "https://picsum.photos/seed/event-4/500/500",
+        "/events/rock-concert-berlin.png",
+        "/events/jazz-night-hamburg.png",
+        "/events/cologne-symphony-orchestra.png",
+        "/events/tech-conference-munich.png",
+        "/events/frankfurt-blues-night.png",
     ];
 
     return (

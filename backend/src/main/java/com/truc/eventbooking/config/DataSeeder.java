@@ -21,24 +21,26 @@ public class DataSeeder implements CommandLineRunner {
 
     private static final ZoneOffset SEED_ZONE = ZoneOffset.UTC;
 
+    private static final String EVENT_IMAGE_BASE_PATH = "/events/";
+
     private static final List<EventSeed> EVENT_SEEDS = List.of(
             new EventSeed("Rock Concert Berlin", "Live concert in Berlin", "Berlin Arena",
-                    5, 19, "Berlin", "Concert", 1, true,
+                    5, 19, "Berlin", "Concert", "rock-concert-berlin.png", true,
                     5, 2, new BigDecimal("49.99"), new BigDecimal("39.99")),
-            new EventSeed("Startup Meetup Berlin", "Networking event for startups", "Berlin Tech Hub",
-                    8, 18, "Berlin", "Business", 6, false,
+            new EventSeed("Berlin Techno Night", "Electronic music night in Berlin", "Berlin Tempodrom",
+                    8, 18, "Berlin", "Concert", "berlin-techno-night.png", false,
                     3, 2, BigDecimal.ZERO, BigDecimal.ZERO),
             new EventSeed("Jazz Night Hamburg", "Amazing jazz performance in Hamburg", "Hamburg Jazz Club",
-                    12, 20, "Hamburg", "Concert", 3, true,
+                    12, 20, "Hamburg", "Concert", "jazz-night-hamburg.png", true,
                     5, 2, new BigDecimal("35.00"), new BigDecimal("29.99")),
             new EventSeed("Tech Conference Munich", "Software engineering conference in Munich", "Munich Messe",
-                    19, 9, "Munich", "Conference", 2, false,
+                    19, 9, "Munich", "Conference", "tech-conference-munich.png", false,
                     4, 2, new BigDecimal("120.00"), new BigDecimal("89.00")),
-            new EventSeed("Food Festival Cologne", "International food festival", "Cologne City Center",
-                    26, 12, "Cologne", "Festival", 5, true,
+            new EventSeed("Cologne Symphony Orchestra", "Classical symphony evening in Cologne", "Cologne Philharmonie",
+                    26, 12, "Cologne", "Concert", "cologne-symphony-orchestra.png", true,
                     8, 3, new BigDecimal("25.00"), new BigDecimal("19.99")),
-            new EventSeed("Art Exhibition Frankfurt", "Modern art exhibition", "Frankfurt Art Museum",
-                    40, 10, "Frankfurt", "Arts", 4, false,
+            new EventSeed("Frankfurt Blues Night", "Blues and soul evening in Frankfurt", "Frankfurt Festhalle",
+                    40, 10, "Frankfurt", "Concert", "frankfurt-blues-night.png", false,
                     4, 2, new BigDecimal("15.00"), new BigDecimal("10.00"))
     );
 
@@ -67,7 +69,7 @@ public class DataSeeder implements CommandLineRunner {
                     startTime,
                     seed.city(),
                     seed.category(),
-                    "https://picsum.photos/seed/event-" + seed.imageSeed() + "/480/270",
+                    EVENT_IMAGE_BASE_PATH + seed.imageFile(),
                     seed.hot()
             ));
             createSeats(event, seed);
@@ -93,7 +95,7 @@ public class DataSeeder implements CommandLineRunner {
             int hourOfDay,
             String city,
             String category,
-            int imageSeed,
+            String imageFile,
             boolean hot,
             int rowCount,
             int premiumRowCount,

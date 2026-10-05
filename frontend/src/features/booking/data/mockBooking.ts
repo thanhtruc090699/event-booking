@@ -1,8 +1,8 @@
 export const mockBooking = {
     event: {
         title: "Rock Concert Berlin",
-        imageUrl: "https://picsum.photos/seed/event-1/700/300",
-        summaryImageUrl: "https://picsum.photos/seed/event-1/120/120",
+        imageUrl: "/events/rock-concert-berlin.png",
+        summaryImageUrl: "/events/rock-concert-berlin.png",
         venue: "Mercedes-Benz Arena, Berlin",
         date: "20 September 2026",
         time: "19:00",

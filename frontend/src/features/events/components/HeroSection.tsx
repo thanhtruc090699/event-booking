@@ -21,7 +21,7 @@ export function HeroSection() {
 
     if (!featuredEvent) {
         return (
-            <section className="flex min-h-[440px] items-center justify-center bg-[var(--void)] px-10">
+            <section className="flex min-h-[440px] items-center justify-center bg-[var(--void)] px-10 md:min-h-[520px] lg:min-h-[560px]">
                 <p className="text-[var(--muted)]">Loading...</p>
             </section>
         );
@@ -32,7 +32,7 @@ export function HeroSection() {
 
     return (
         <section 
-            className="flex min-h-[440px] items-end bg-cover bg-center px-10 pb-10"
+            className="flex min-h-[440px] items-end bg-cover bg-center px-10 pb-10 md:min-h-[520px] lg:min-h-[560px]"
             style={{
                 backgroundImage: `linear-gradient(to top, var(--void) 0%, transparent 100%), url(${featuredEvent.imageUrl})`
             }}

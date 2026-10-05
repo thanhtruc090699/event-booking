@@ -1,13 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { cn } from "@/lib/cn";
 import { SearchBox } from "@/features/events/components/SearchBox";
-
-const categories = ["All", "Concert", "Festival", "Theatre", "Sports"];
+import { getEvents } from "@/features/events/api/eventsApi";
+import type { EventDto } from "@/features/events/api/eventsApi";
 
 export function SearchSection() {
-    const [activeCategory, setActiveCategory] = useState("All");
+    const [events, setEvents] = useState<EventDto[]>([]);
+
+    useEffect(() => {
+        getEvents()
+            .then(setEvents)
+            .catch(err => console.error("Failed to load categories:", err));
+    }, []);
+
+    const categories = useMemo(() => {
+        const cats = new Set<string>(events.map(e => e.category));
+        return ["All", ...cats];
+    }, [events]);
 
     return (
         <section className="mx-auto max-w-6xl px-5 pt-9 md:px-10">
@@ -19,19 +31,16 @@ export function SearchSection() {
 
             <div className="mt-5 flex flex-wrap gap-3">
                 {categories.map((category) => (
-                    <button
+                    <Link
                         key={category}
-                        type="button"
-                        onClick={() => setActiveCategory(category)}
+                        href={category === "All" ? "/events" : `/events?category=${encodeURIComponent(category)}`}
                         className={cn(
                             "rounded-full border px-5 py-2 text-sm transition",
-                            activeCategory === category
-                                ? "border-[var(--gold)] bg-[var(--gold)] font-semibold text-[#3a2a08]"
-                                : "border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--ink)]"
+                            "border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--ink)]"
                         )}
                     >
                         {category}
-                    </button>
+                    </Link>
                 ))}
             </div>
         </section>

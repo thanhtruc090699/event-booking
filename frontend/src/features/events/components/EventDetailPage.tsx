@@ -60,7 +60,7 @@ export function EventDetailPage({ eventId }: EventDetailPageProps) {
 
     return (
         <main>
-            <section className="relative min-h-[520px] overflow-hidden">
+            <section className="relative min-h-[520px] overflow-hidden md:min-h-[580px] lg:min-h-[620px]">
                 <div
                     className="absolute inset-0 bg-cover bg-center"
                     style={{
@@ -70,7 +70,7 @@ export function EventDetailPage({ eventId }: EventDetailPageProps) {
 
                 <div className="absolute inset-0 bg-gradient-to-t from-[var(--void)] via-[rgba(10,10,12,0.72)] to-[rgba(10,10,12,0.15)]" />
 
-                <div className="relative mx-auto grid max-w-6xl gap-8 px-5 pb-14 pt-64 md:px-10 lg:grid-cols-[1fr_340px] lg:items-end">
+                <div className="relative mx-auto grid max-w-6xl gap-8 px-5 pb-14 pt-56 md:px-10 md:pt-64 lg:grid-cols-[1fr_340px] lg:items-end">
                     <div>
                         <span className="inline-flex rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 py-1 font-[var(--font-mono)] text-xs uppercase tracking-[0.18em] text-[var(--gold)]">
                             {event.category}
