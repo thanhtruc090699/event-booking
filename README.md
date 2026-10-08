@@ -10,7 +10,9 @@ A full-stack event ticket booking system: browse events, hold seats for a limite
 | **Backend API** | https://event-booking-vqxe.onrender.com |
 | **Health check** | https://event-booking-vqxe.onrender.com/health |
 
-> The backend runs on a free Render instance, which sleeps after ~15 minutes of inactivity. The first request after that takes roughly a minute to wake up — this is expected, not an outage.
+> The backend runs on a free Render instance, which sleeps after ~15 minutes of inactivity. The first request after that takes roughly a minute to wake it up — this is expected, not an outage.
+>
+> **Tip:** open the backend link (or the health check) first, wait ~1 minute for it to wake up, then open the frontend — otherwise the first page load may fail while the API is still cold.
 
 ### Key features
 
